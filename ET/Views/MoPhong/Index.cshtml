@@ -1,0 +1,147 @@
+﻿@{
+    ViewData["Title"] = "Danh sách loại bằng lái";
+}
+
+<style>
+    .card-hover:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transform: translateY(-5px);
+        transition: all 0.3s ease;
+    }
+
+    .license-card {
+        cursor: pointer;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 300px;
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(0, 0, 0, 0.1);
+        border-top-color: #007bff;
+        border-radius: 50%;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @@keyframes spin {
+        to
+
+    {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    .license-info {
+        margin-bottom: 1rem;
+    }
+
+        .license-info .badge {
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+</style>
+
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="text-center">Mô phỏng các loại bằng lái</h1>
+            <p class="text-center text-muted">Chọn loại bằng lái để xem các bài mô phỏng</p>
+            <hr />
+        </div>
+    </div>
+
+    <div id="license-container" class="row">
+        <div class="loading-container">
+            <div class="spinner"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gọi API để lấy danh sách loại bằng lái
+            fetchLicenseTypes();
+
+            function fetchLicenseTypes() {
+                // Sử dụng endpoint API đã cung cấp
+                fetch('/api/LoaiBangLai/get-loai-bang-lai-has-mo-phong')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status) {
+                            renderLicenseTypes(data.data);
+                        } else {
+                            showError(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching license types:', error);
+                        showError('Không thể tải danh sách loại bằng lái. Vui lòng thử lại sau.');
+                    });
+            }
+
+            function renderLicenseTypes(licenseTypes) {
+                const container = document.getElementById('license-container');
+
+                if (!licenseTypes || licenseTypes.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-info text-center">
+                                Không có loại bằng lái nào có bài mô phỏng.
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                        let html = '';
+        licenseTypes.forEach(license => {
+            const moPhongCount = license.moPhongs ? license.moPhongs.length : 0;
+
+                    html += `
+            <div class="col-md-4 mb-4">
+                <a href="/MoPhong/Details?id=${license.id}" class="text-decoration-none text-dark">
+                    <div class="card license-card card-hover shadow-sm border-0">
+                        <div class="card-header bg-primary text-white d-flex align-items-center gap-2">
+                            <i class="fas fa-id-card-alt me-2"></i>
+                            <h5 class="card-title m-0">Bằng ${license.tenLoai}</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">${license.moTa || 'Không có mô tả'}</p>
+                        </div>
+                        <div class="card-footer text-center bg-light">
+                            <button class="btn btn-primary">Xem các bài mô phỏng</button>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        `;
+
+        });
+
+                container.innerHTML = html;
+            }
+
+            function showError(message) {
+                const container = document.getElementById('license-container');
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger text-center">
+                            ${message}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    </script>
+}

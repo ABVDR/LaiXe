@@ -1,0 +1,88 @@
+﻿@{
+    ViewData["Title"] = "Ket qua câu sai";
+}
+
+
+    <div class="container mt-4">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">Kết quả luyện tập</h4>
+            </div>
+            <div class="card-body" id="resultContent">
+                <h5 class="text-center">Đang tải kết quả...</h5>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = async function () {
+            const data = localStorage.getItem("ketQuaLuyenLai");
+            if (!data) {
+                document.getElementById("resultContent").innerHTML = "<p class='text-danger'>Không có dữ liệu kết quả!</p>";
+                return;
+            }
+
+            const resultList = JSON.parse(data);
+            const correct = resultList.filter(x => x.isCorrect).length;
+            const wrong = resultList.length - correct;
+
+            let html = `
+                <h3 class="text-center">Bạn đã hoàn thành phần luyện tập!</h3>
+                <div class="row mt-4 text-center">
+                    <div class="col-md-4"><div class="card bg-success text-white mb-3"><div class="card-body">
+                        <h5>Đúng</h5><h2>${correct}</h2>
+                    </div></div></div>
+                    <div class="col-md-4"><div class="card bg-danger text-white mb-3"><div class="card-body">
+                        <h5>Sai</h5><h2>${wrong}</h2>
+                    </div></div></div>
+                    <div class="col-md-4"><div class="card bg-primary text-white mb-3"><div class="card-body">
+                        <h5>Tổng câu</h5><h2>${resultList.length}</h2>
+                    </div></div></div>
+                </div>
+            `;
+
+            resultList.forEach(item => {
+                html += `
+                    <div class="card mt-4 shadow-sm">
+                        <div class="card-header bg-light"><strong>Câu hỏi:</strong> ${item.noiDung}</div>
+                        <div class="card-body">
+                            <ul class="list-group">
+                                ${renderOption(item, "A")}
+                                ${renderOption(item, "B")}
+                                ${item.luaChonC ? renderOption(item, "C") : ""}
+                                ${item.luaChonD ? renderOption(item, "D") : ""}
+                            </ul>
+                            <div class="mt-2">
+                                ${item.isCorrect
+                                    ? `<span class="badge bg-success">✅ Bạn đã trả lời đúng</span>`
+                                    : `<span class="badge bg-danger">❌ Bạn trả lời sai</span>`}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                <div class="text-center mt-4">
+                <a href="LuyenLaiCauSai" class="btn btn-success me-2"><i class="fas fa-redo"></i> Luyện lại câu sai</a>
+                <a href="Index" class="btn btn-secondary"><i class="fas fa-home"></i> Trang chủ</a>
+                </div>`;
+
+            document.getElementById("resultContent").innerHTML = html;
+        };
+
+        function renderOption(item, key) {
+            const value = item["luaChon" + key];
+            const isCorrect = item.dapAnDung === key;
+            const isUser = item.dapAnNguoiDung === key;
+            const className = isCorrect ? "list-group-item-success" :
+                              isUser && !isCorrect ? "list-group-item-danger" : "";
+
+            return `
+            <li class="list-group-item ${className}">
+                <strong>${key}.</strong> ${value}
+                ${isUser ? `<span class="badge bg-info ms-2">Bạn chọn</span>` : ""}
+                ${isCorrect ? `<span class="badge bg-success ms-2">Đáp án đúng</span>` : ""}
+            </li>`;
+        }
+    </script>

@@ -1,0 +1,115 @@
+﻿@{
+    ViewData["Title"] = "Thêm bài sa hình";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Thêm bài sa hình</h2>
+
+    <form id="createForm">
+        <div class="form-group">
+            <label for="TenBai">Tên bài</label>
+            <input type="text" id="TenBai" class="form-control" required />
+        </div>
+
+        <div class="form-group">
+            <label for="Order">Thứ tự</label>
+            <input type="number" id="Order" class="form-control" required />
+        </div>
+
+        <div class="form-group">
+            <label for="FileUpload">Nội dung *</label>
+            <input type="file" id="FileUpload" accept=".mp4,.webm,.ogg,.mov,.jpg,.jpeg,.png,.gif" class="form-control" required />
+            <small class="form-text text-muted">Chọn tệp (ảnh hoặc video)</small>
+        </div>
+
+        <!-- Ẩn: Nội dung thực tế -->
+        <textarea id="NoiDung" hidden></textarea>
+
+        <div class="form-group">
+            <label for="LoaiBangLaiId">Loại bằng lái</label>
+            <select id="LoaiBangLaiId" class="form-control" required></select>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Thêm bài</button>
+    </form>
+
+@section Scripts {
+        <script>
+            // Load danh sách loại bằng lái
+            fetch('/api/LoaiBangLai/get-loai-bang-lai-list')
+                .then(res => res.json())
+                .then(data => {
+                    const select = document.getElementById("LoaiBangLaiId");
+                    data.data.forEach(loai => {
+                        const option = document.createElement("option");
+                        option.value = loai.id;
+                        option.text = loai.tenLoai;
+                        select.appendChild(option);
+                    });
+                });
+
+            document.getElementById("createForm").addEventListener("submit", async function (e) {
+                e.preventDefault();
+
+                const fileInput = document.getElementById("FileUpload");
+                if (fileInput.files.length === 0) {
+                    alert("Vui lòng chọn tệp ảnh hoặc video!");
+                    return;
+                }
+
+                const file = fileInput.files[0];
+                const fileType = file.type;
+
+                const formData = new FormData();
+                formData.append("file", file);
+
+                const uploadUrl = fileType.startsWith("video/")
+                    ? "/api/Upload/upload-video"
+                    : "/api/Upload/upload-image";
+
+                const uploadRes = await fetch(uploadUrl, {
+                    method: "POST",
+                    body: formData
+                });
+
+                const uploadResult = await uploadRes.json();
+                if (!uploadResult.status) {
+                    alert("Upload thất bại: " + uploadResult.message);
+                    return;
+                }
+
+                let htmlContent = "";
+                if (fileType.startsWith("video/")) {
+                    htmlContent = `<video controls src="${uploadResult.filePath}" style="max-width:100%"></video>`;
+                } else if (fileType.startsWith("image/")) {
+                    htmlContent = `<img src="${uploadResult.filePath}" alt="Hình minh họa" style="max-width:100%;" />`;
+                }
+
+                // Gán vào nội dung
+                document.getElementById("NoiDung").value = htmlContent;
+            const data = {
+                TenBai: document.getElementById("TenBai").value,
+                Order: parseInt(document.getElementById("Order").value),
+                NoiDung: document.getElementById("NoiDung").value,
+                LoaiBangLaiId: document.getElementById("LoaiBangLaiId").value
+            };
+
+                const resCreate = await fetch("/api/SaHinh/create", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await resCreate.json();
+                if (result.status) {
+                    alert("Thêm bài sa hình thành công!");
+                    location.href = "/Admin/QLSaHinh";
+                } else {
+                    alert("Lỗi: " + result.message);
+                }
+            });
+        </script>
+}

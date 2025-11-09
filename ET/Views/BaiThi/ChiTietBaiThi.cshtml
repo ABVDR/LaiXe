@@ -1,0 +1,73 @@
+﻿@{
+    ViewData["Title"] = "Chi tiết bài thi";
+}
+
+<div class="container py-4">
+   
+
+    <!-- Tiêu đề -->
+    <div class="text-center mb-4">
+        <h2 class="fw-bold fs-3 text-dark">
+            <i class="fas fa-file-alt text-primary me-2"></i>Chi tiết bài thi <span id="baiThiIdText"></span>
+        </h2>
+    </div>
+
+    <!-- Danh sách câu hỏi -->
+    <div id="questionList" class="list-group">
+        <div class="text-muted text-center">Đang tải dữ liệu...</div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const baiThiId = urlParams.get("id");
+
+            if (!baiThiId) {
+                document.getElementById("questionList").innerHTML = '<div class="alert alert-danger text-center">Không tìm thấy ID bài thi.</div>';
+                return;
+            }
+
+            fetch(`/api/BaiThi/${baiThiId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        document.getElementById("questionList").innerHTML = `<div class="alert alert-danger text-center">${data.message}</div>`;
+                        return;
+                    }
+
+                    const baiThi = data.data;
+
+                    document.getElementById("baiThiIdText").innerText = baiThi.tenBaiThi ?? `#${baiThiId}`;
+
+                    const chiTietList = baiThi.chiTietBaiThis;
+
+                    if (!chiTietList || chiTietList.length === 0) {
+                        document.getElementById("questionList").innerHTML = '<div class="alert alert-warning text-center">Không có câu hỏi nào trong bài thi này.</div>';
+                        return;
+                    }
+
+                    let html = "";
+                    chiTietList.forEach((ct, index) => {
+                        html += `
+                            <div class="list-group-item py-3 px-4 mb-2 border rounded shadow-sm">
+                                <div class="d-flex">
+                                    <strong class="me-2">Câu ${index + 1}:</strong>
+                                    <span>${ct.cauHoi.noiDung}</span>
+                                </div>
+                            </div>`;
+                    });
+
+                    document.getElementById("questionList").innerHTML = html;
+
+                    const loaiBangLaiId = chiTietList[0].cauHoi.loaiBangLaiId;
+                })
+                .catch(error => {
+                    console.error(error);
+                    document.getElementById("questionList").innerHTML = '<div class="alert alert-danger text-center">Lỗi khi tải dữ liệu!</div>';
+                });
+        });
+    </script>
+}
+

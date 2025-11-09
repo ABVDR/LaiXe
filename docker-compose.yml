@@ -1,0 +1,70 @@
+services:
+  et:
+    container_name: web-do-an
+    image: ${DOCKER_REGISTRY-}et
+    build:
+      context: .
+      dockerfile: ET/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=sql-server;Database=Do_An_Chuyen_Nganh;User Id=sa;Password=111AAAa@;Encrypt=False;TrustServerCertificate=True
+      - ConnectionStrings__RedisCacheDoAn=redis:6379
+      - JWTKey__ValidAudience=http://localhost:8888
+      - JWTKey__ValidIssuer=http://localhost:8888
+    ports:
+        - "8888:8080"
+    depends_on:
+        sql-server:
+            condition: service_healthy
+        redis:
+            condition: service_started
+    restart: always
+    volumes:
+      - uploaded_images:/app/wwwroot/images
+      - uploaded_videos:/app/wwwroot/videos
+    networks:
+      - do-an-chuyen-nganh-network
+  redis:
+    image: redis:latest
+    container_name: redis-server
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - do-an-chuyen-nganh-network
+  sql-server:
+     image: mcr.microsoft.com/mssql/server:2022-latest
+     container_name: sql-server
+     restart: always
+     environment:
+       SA_PASSWORD: "111AAAa@"
+       ACCEPT_EULA: "Y"
+     ports:
+       - "14333:1433"
+     volumes:
+       - sql_data:/var/opt/mssql
+     healthcheck:
+       test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P '111AAAa@' -C -Q 'SELECT 1' || exit 1"]
+       interval: 10s
+       timeout: 5s
+       retries: 5
+       start_period: 30s
+     networks:
+       - do-an-chuyen-nganh-network
+volumes:
+   redis_data:
+   sql_data:
+   uploaded_images:
+   uploaded_videos:
+networks:
+  do-an-chuyen-nganh-network:
+    driver: bridge

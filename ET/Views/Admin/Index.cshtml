@@ -1,0 +1,132 @@
+﻿@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <h1 class="mb-4">Admin Dashboard</h1>
+
+    <!-- Total Users Card -->
+    <div class="row mb-4">
+        <div class="col-12 col-md-3 ms-auto">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Users</h5>
+                    <h3 id="totalUsers">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Per Month Chart -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Users Created Per Month (2025)</h5>
+                    <canvas id="usersPerMonthChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<style>
+    .card {
+        border-radius: 8px;
+    }
+
+    #totalUsers {
+        font-size: 2rem;
+        color: #007bff;
+    }
+</style>
+@section Scripts {
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.5/dist/chart.umd.min.js"></script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Get JWT token
+            function getToken() {
+                return localStorage.getItem('jwtToken') || '';
+            }
+
+            // Fetch total users
+            fetch('/api/statistics/count-all-user', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch total users');
+                    }
+                    return response.json();
+                })
+                .then(response => {
+                    if (response.status) {
+                        $('#totalUsers').text(response.data);
+                    } else {
+                        Swal.fire('Error', 'Cannot fetch total users', 'error');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire('Error', 'Failed to fetch total users', 'error');
+                    console.error('Error fetching total users:', error);
+                });
+
+            // Fetch users per month
+            fetch('/api/statistics/users-per-month', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch users per month');
+                    }
+                    return response.json();
+                })
+                .then(response => {
+                    if (response.status) {
+                        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        const userCounts = Object.values(response.data);
+
+                        new Chart(document.getElementById('usersPerMonthChart').getContext('2d'), {
+                            type: 'bar',
+                            data: {
+                                labels: months,
+                                datasets: [{
+                                    label: 'Users Created',
+                                    data: userCounts,
+                                    backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                                    borderColor: 'rgba(0, 123, 255, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    y: { beginAtZero: true, title: { display: true, text: 'Users' } },
+                                    x: { title: { display: true, text: 'Month' } }
+                                }
+                            }
+                        });
+                    } else {
+                        Swal.fire('Error', 'Cannot fetch users per month', 'error');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire('Error', 'Failed to fetch users per month', 'error');
+                    console.error('Error fetching users per month:', error);
+                });
+        });
+    </script>
+}

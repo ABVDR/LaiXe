@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ETAuthApp</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        body {
+            background: linear-gradient(to right, #f9f9f9, #e3f2fd);
+        }
+
+        .auth-card {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .auth-logo {
+            display: block;
+            margin: 0 auto 1rem auto;
+            width: 120px;
+        }
+
+        .auth-title {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #0d47a1;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer class="text-center mt-5 mb-3 text-muted">
+        <p>© 2025 ETAuthApp - Đồ án công nghệ phần mềm</p>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/auth.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

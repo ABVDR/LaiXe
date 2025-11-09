@@ -1,0 +1,160 @@
+﻿@{
+    ViewData["Title"] = "Chọn Chủ Đề Ôn Tập";
+}
+
+<div class="container2 mt-5">
+    <h2 class="section-title text-center mb-4">
+        Chọn chủ đề ôn tập - <span id="tenLoaiText" class="text-primary fw-bold"></span>
+    </h2>
+
+    <div id="chuDeContent">
+        <div class="text-center">Đang tải dữ liệu...</div>
+    </div>
+</div>
+
+<style>
+    .container2 {
+        max-width: 1200px;
+        margin: 50px auto;
+        padding: 0 20px;
+    }
+
+    .section-title {
+        font-size: 32px;
+        font-weight: 800;
+        color: #1d3557;
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+        .section-title span {
+            color: #007bff;
+        }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+        padding: 15px 20px;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: 600;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .grid-topic {
+        display: grid;
+        width: 100%;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 32px;
+        justify-content: center;
+    }
+
+
+    .card-topic {
+        position: relative;
+        border-radius: 24px;
+        background: #ffffff;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        padding: 30px 24px;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+        text-decoration: none;
+    }
+
+        .card-topic:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+        }
+
+    .badge-circle {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: #3498db;
+        color: #fff;
+        border-radius: 30px;
+        padding: 8px 18px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .icon-topic img {
+        max-height: 110px;
+        object-fit: contain;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        transition: transform 0.3s ease;
+    }
+
+    .card-topic:hover .icon-topic img {
+        transform: scale(1.05);
+    }
+
+    .title-topic {
+        font-size: 22px;
+        font-weight: 700;
+        color: #2c3e50;
+        text-transform: uppercase;
+        line-height: 1.5;
+        letter-spacing: 0.5px;
+    }
+
+    .card-topic:hover .title-topic {
+        color: #e67e22;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const params = new URLSearchParams(window.location.search);
+            const loaiBangLaiId = params.get("loaiBangLaiId");
+
+            if (!loaiBangLaiId) {
+                document.getElementById("chuDeContent").innerHTML =
+                    '<div class="alert alert-danger text-center">❌ Không tìm thấy loại bằng lái trong URL.</div>';
+                return;
+            }
+
+            fetch(`/api/ChuDe/${loaiBangLaiId}/chu-de`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data || !data.chuDeList || data.chuDeList.length === 0) {
+                        document.getElementById("chuDeContent").innerHTML =
+                            '<div class="alert alert-warning text-center">⚠️ Không có chủ đề nào cho loại bằng lái này.</div>';
+                        return;
+                    }
+
+                    document.getElementById("tenLoaiText").textContent = data.loai.tenLoai;
+
+                    let html = '<div class="grid-topic">';
+                    data.chuDeList.forEach(chuDe => {
+                        const soCau = chuDe.soCau || 0;
+                        const imgUrl = chuDe.imageUrl || '/images/default-topic.png';
+
+                        html += `
+                            <a href="/BaiThi/OnTapChuDe?loaiBangLaiId=${loaiBangLaiId}&chuDeId=${chuDe.id}">
+                                <div class="card-topic">
+                                    <div class="badge-circle">${soCau} câu</div>
+                                    <div class="icon-topic">
+                                        <img src="${imgUrl}" alt="${chuDe.tenChuDe}" />
+                                    </div>
+                                    <div class="title-topic">${chuDe.tenChuDe}</div>
+                                </div>
+                            </a>`;
+                    });
+
+                    html += '</div>';
+                    document.getElementById("chuDeContent").innerHTML = html;
+                })
+                .catch(error => {
+                    console.error(error);
+                    document.getElementById("chuDeContent").innerHTML =
+                        '<div class="alert alert-danger text-center">Lỗi tải dữ liệu chủ đề.</div>';
+                });
+        });
+    </script>
+}

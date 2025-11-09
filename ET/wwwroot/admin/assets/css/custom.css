@@ -1,0 +1,14 @@
+﻿/* Tùy chỉnh logo sidebar */
+.sidebar-logo img.sidebar-logo,
+.logo-header img.sidebar-logo {
+    height: 50px;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+/* Tùy chỉnh logo header */
+.main-header-logo .header-logo {
+    height: 40px;
+    max-width: 100%;
+    object-fit: contain;
+}

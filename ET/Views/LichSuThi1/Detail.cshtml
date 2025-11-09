@@ -1,0 +1,289 @@
+﻿@{
+    ViewData["Title"] = "Chi Tiết Lịch Sử Thi";
+    var examId = ViewData["ExamId"];
+}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Chi tiết lịch sử thi</h2>
+        <a href="/LichSuThi1" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <!-- Loading indicator -->
+    <div class="text-center" id="loading-detail">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Đang tải dữ liệu chi tiết bài thi...</p>
+    </div>
+
+    <!-- Error message - initially hidden -->
+    <div class="alert alert-danger d-none" id="error-message">
+        Không tìm thấy thông tin lịch sử thi.
+    </div>
+
+    <!-- Exam details - initially hidden -->
+    <div id="exam-details-container" class="d-none">
+        <!-- Thông tin cơ bản -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Thông tin bài thi</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th>Tên bài thi:</th>
+                                <td id="exam-name"></td>
+                            </tr>
+                            <tr>
+                                <th>Ngày thi:</th>
+                                <td id="exam-date"></td>
+                            </tr>
+                            <tr>
+                                <th>Kết quả:</th>
+                                <td id="exam-result"></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th>Tổng số câu:</th>
+                                <td id="total-questions"></td>
+                            </tr>
+                            <tr>
+                                <th>Số câu đúng:</th>
+                                <td id="correct-answers"></td>
+                            </tr>
+                            <tr>
+                                <th>Điểm:</th>
+                                <td id="exam-score"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Biểu đồ kết quả -->
+                <div class="progress" style="height: 25px;">
+                    <div class="progress-bar bg-success"
+                         role="progressbar"
+                         id="progress-bar"
+                         style="width: 0%;"
+                         aria-valuenow="0"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                        0%
+                    </div>
+                </div>
+
+                <div class="alert alert-danger mt-3 d-none" id="critical-error-message">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Bài thi này có lỗi nghiêm trọng.
+                </div>
+            </div>
+        </div>
+
+        <!-- Chi tiết câu trả lời -->
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Chi tiết câu trả lời</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Câu hỏi</th>
+                                <th scope="col">Câu trả lời của bạn</th>
+                                <th scope="col">Đáp án đúng</th>
+                                <th scope="col">Kết quả</th>
+                            </tr>
+                        </thead>
+                        <tbody id="answers-table-body">
+                            <!-- JS will populate this area -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nút xóa lịch sử thi -->
+        <div class="mt-4 text-end">
+            <button id="delete-exam-btn" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Xóa lịch sử thi này
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            const examId = '@examId';
+
+            // Remove the getToken function - cookies are being used automatically
+            // function getToken() {
+            //     return localStorage.getItem('jwtToken') || '';
+            // }
+
+            // Load exam detail
+            loadExamDetail(examId);
+
+            function loadExamDetail(id) {
+                $('#loading-detail').removeClass('d-none');
+                $('#error-message').addClass('d-none');
+                $('#exam-details-container').addClass('d-none');
+
+                $.ajax({
+                    url: `/api/lichsuthi/detail/${id}`,
+                    type: 'GET',
+                    // Remove Authorization header since cookies handle auth
+                    // headers: { 'Authorization': 'Bearer ' + getToken() },
+                    success: function(response) {
+                        $('#loading-detail').addClass('d-none');
+                        console.log('Exam detail response:', response);
+
+                        if (response.status && response.data) {
+                            $('#exam-details-container').removeClass('d-none');
+                            renderExamDetail(response.data);
+                        } else {
+                            $('#error-message').removeClass('d-none');
+                            console.error('Failed to load exam detail:', response.message || 'Unknown error');
+                        }
+                    },
+                    error: function(err) {
+                        $('#loading-detail').addClass('d-none');
+                        $('#error-message').removeClass('d-none');
+                        console.error('Error loading exam detail:', err);
+                    }
+                });
+            }
+
+            function renderExamDetail(data) {
+                console.log('Rendering exam details with data:', data);
+
+                if (!data.lichSuThi) {
+                    console.error('No lichSuThi data in response');
+                    $('#error-message').removeClass('d-none').text('Dữ liệu lịch sử thi không hợp lệ');
+                    return;
+                }
+
+                const lichSuThi = data.lichSuThi;
+                const chiTietList = data.chiTietList || [];
+
+                // Format date
+                const date = new Date(lichSuThi.ngayThi);
+                const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+
+                // Populate basic info
+                $('#exam-name').text(lichSuThi.tenBaiThi || 'Không có tên');
+                $('#exam-date').text(formattedDate);
+                $('#exam-result').html(`
+                    <span class="badge ${lichSuThi.ketQua === 'Đậu' ? 'bg-success' : 'bg-danger'}">
+                        ${lichSuThi.ketQua || 'Không xác định'}
+                    </span>
+                `);
+                $('#total-questions').text(lichSuThi.tongSoCau || 0);
+                $('#correct-answers').text(lichSuThi.soCauDung || 0);
+                $('#exam-score').text(lichSuThi.diem || 0);
+
+                // Update progress bar
+                const percent = lichSuThi.phanTramDung || 0;
+                $('#progress-bar').css('width', `${percent}%`).attr('aria-valuenow', percent).text(`${percent.toFixed(1)}%`);
+
+                // Show critical error message if needed
+                if (lichSuThi.macLoiNghiemTrong) {
+                    $('#critical-error-message').removeClass('d-none');
+                }
+
+                // Render answers table
+                renderAnswersTable(chiTietList);
+
+                // Set up delete button
+                $('#delete-exam-btn').on('click', function() {
+                    if (confirm('Bạn có chắc chắn muốn xóa lịch sử thi này?')) {
+                        deleteExam(lichSuThi.id);
+                    }
+                });
+
+            }
+
+            function renderAnswersTable(chiTietList) {
+                const tableBody = $('#answers-table-body');
+                tableBody.empty();
+
+                if (!chiTietList || chiTietList.length === 0) {
+                    tableBody.append(`
+                        <tr>
+                            <td colspan="5" class="text-center">Không có dữ liệu chi tiết</td>
+                        </tr>
+                    `);
+                    return;
+                }
+
+                chiTietList.forEach((chiTiet, index) => {
+                    const question = chiTiet.cauHoi || {};
+
+                    // Fix the class based on dungSai value (true means wrong, false means correct)
+                    const rowClass = chiTiet.dungSai === true ? 'table-danger' : 'table-success';
+                    const iconClass = chiTiet.dungSai === true ?
+                        '<i class="bi bi-x-circle-fill text-danger fs-4"></i>' :
+                        '<i class="bi bi-check-circle-fill text-success fs-4"></i>';
+
+                    const row = $(`
+                        <tr class="${rowClass}">
+                            <td>${index + 1}</td>
+                            <td>
+                                <strong>${question.noiDung || 'Không có nội dung'}</strong>
+                                ${question.mediaUrl ?
+                                    `<div class="mt-2">
+                                        <img src="${question.mediaUrl}" alt="Hình ảnh câu hỏi" class="img-fluid" style="max-height: 150px;" />
+                                    </div>` : ''
+                                }
+                                <div class="mt-2">
+                                    <small class="text-muted">Chủ đề: ${question.chuDe?.tenChuDe || 'Không xác định'}</small>
+                                </div>
+                            </td>
+                            <td>
+                                ${chiTiet.cauTraLoi || 'Không trả lời'}
+                            </td>
+                            <td>
+                                ${question.dapAnDung || 'Không xác định'}
+                            </td>
+                            <td class="text-center">
+                                ${iconClass}
+                            </td>
+                        </tr>
+                    `);
+
+                    tableBody.append(row);
+                });
+            }
+
+            function deleteExam(id) {
+                $.ajax({
+                    url: `/api/lichsuthi/delete/${id}`,
+                    type: 'DELETE',
+                    // Remove Authorization header since cookies handle auth
+                    // headers: { 'Authorization': 'Bearer ' + getToken() },
+                    success: function(response) {
+                        if (response.status) {
+                            alert('Xóa lịch sử thi thành công');
+                            window.location.href = '/LichSuThi1';
+                        } else {
+                            alert('Xóa lịch sử thi thất bại: ' + response.message);
+                        }
+                    },
+                    error: function(err) {
+                        alert('Xóa lịch sử thi thất bại. Vui lòng thử lại sau.');
+                        console.error('Error deleting exam:', err);
+                    }
+                });
+            }
+        });
+    </script>
+}

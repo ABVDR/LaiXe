@@ -1,0 +1,206 @@
+﻿@{
+    ViewData["Title"] = "Danh sách bằng lái xe máy";
+}
+
+<div class="container mt-2">
+    <h2 class="mb-4 text-center fw-bold display-5" style="background: linear-gradient(to right, #007bff, #00c6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        Danh sách bằng lái xe máy
+    </h2>
+
+    <!-- Dropdown lọc loại bằng -->
+    <div class="row justify-content-center" style="margin-top: 50px; margin-bottom:80px">
+        <div class="col-md-4">
+            <label for="loaiBangLaiFilter" class="form-label">Lọc theo loại bằng:</label>
+            <select id="loaiBangLaiFilter" class="form-select text-center"></select>
+        </div>
+    </div>
+
+    <!-- Container render danh sách -->
+    <div class="row justify-content-center" id="bangLaiContainer"></div>
+</div>
+
+<style>
+    .custom-card-hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .custom-card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+            z-index: 2;
+        }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            fetch('/api/LoaiBangLai/xe-may')
+                .then(res => res.json())
+                .then(data => {
+                    // ✅ Kiểm tra đúng cấu trúc trả về là mảng
+                    if (!Array.isArray(data) || data.length === 0) {
+                        $('#bangLaiContainer').html('<div class="alert alert-info text-center">Không có dữ liệu bằng lái xe máy.</div>');
+                        return;
+                    }
+
+                    // Dropdown filter
+                    const distinctLoai = [...new Set(data.map(x => x.tenLoai))];
+                    $('#loaiBangLaiFilter').html(
+                        distinctLoai.map(ten => `<option value="${ten}">${ten}</option>`).join('')
+                    );
+
+                    renderCards(data);
+                    filterLoai($('#loaiBangLaiFilter').val());
+
+                    $('#loaiBangLaiFilter').change(function () {
+                        const selectedLoai = $(this).val();
+                        filterLoai(selectedLoai);
+                        updateSelectedLoaiText(selectedLoai);
+                    });
+
+                    function renderCards(data) {
+                        let html = '';
+                        data.forEach(item => {
+                            html += `
+        <div class="col-md-10 mb-12 bangLaiCard" data-tenloai="${item.tenLoai}">
+            <div class="row">
+                <!-- Card 1 -->
+                <div class="col-lg-6 col-md-12 mb-4">
+                    <a href="/BaiThi/DanhSachDeThi?loaiBangLaiId=${item.id}" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 p-4 h-100 custom-card-hover">
+                            <div class="text-center p-4">
+                                <div class="d-inline-block mb-3">
+                                    <div class="d-flex flex-wrap justify-content-center" style="width: 100px; margin: 0 auto;">
+                                        <div class="bg-danger text-white p-2 m-1 rounded" style="width: 40px; height: 40px;">A</div>
+                                        <div class="bg-warning text-white p-2 m-1 rounded" style="width: 40px; height: 40px;">C</div>
+                                        <div class="bg-primary text-white p-2 m-1 rounded" style="width: 40px; height: 40px;">B</div>
+                                        <div class="bg-success text-white p-2 m-1 rounded" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-check"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h4 class="fw-bold text-dark mb-0">Thi thử đề tạo sẵn</h4>
+                            </div>
+                            <div class="position-absolute top-0 start-0 m-3">
+                                <div class="selectedLoai bg-success text-white fw-bold px-3 py-2 rounded-pill d-inline-block">${item.tenLoai}</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="col-lg-6 col-md-12 mb-4">
+                         <a href="javascript:void(0)" onclick="lamDeNgauNhien('${item.id}')" class="text-decoration-none">
+                         
+                                              
+                        <div class="card border-0 shadow-sm rounded-4 p-4 h-100 custom-card-hover">
+                            <div class="text-center p-4">
+                                <div class="d-inline-block mb-3">
+                                    <div style="width: 85px; height: 85px; margin: 0 auto;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="85" height="85" fill="none" stroke="#2980b9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                            <circle cx="7.5" cy="7.5" r="1.5" />
+                                            <circle cx="16.5" cy="16.5" r="1.5" />
+                                            <circle cx="7.5" cy="16.5" r="1.5" />
+                                            <circle cx="16.5" cy="7.5" r="1.5" />
+                                            <circle cx="12" cy="12" r="1.5" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <h4 class="fw-bold text-dark mb-0">Làm đề ngẫu nhiên</h4>
+                            </div>
+                            <div class="position-absolute top-0 start-0 m-3">
+                                <div class="selectedLoai bg-success text-white fw-bold px-3 py-2 rounded-pill d-inline-block">${item.tenLoai}</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="col-lg-6 col-md-12 mb-4">
+                    <a href="/ChuDe/ChonChuDe?loaiBangLaiId=${item.id}" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 p-4 h-100 custom-card-hover">
+                            <div class="text-center p-4">
+                                <div class="d-inline-block mb-3">
+                                    <div style="width: 65px; height: 65px; margin: 0 auto;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="65" height="65" viewBox="0 0 24 24" fill="none" stroke="#8e44ad" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="6" x2="12" y2="12"></line>
+                                            <line x1="12" y1="12" x2="16" y2="14"></line>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <h4 class="fw-bold text-dark mb-0">Ôn tập theo chủ đề</h4>
+                            </div>
+                            <div class="position-absolute top-0 start-0 m-3">
+                                <div class="selectedLoai bg-success text-white fw-bold px-3 py-2 rounded-pill d-inline-block">${item.tenLoai}</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="col-lg-6 col-md-12 mb-4">
+                    <a href="/BaiThi/OnTap?loaiBangLaiId=${item.id}" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 p-4 h-100 custom-card-hover">
+                            <div class="text-center p-4">
+                                <div class="d-inline-block mb-3">
+                                    <div style="width: 65px; height: 65px; margin: 0 auto;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="65" height="65" viewBox="0 0 24 24" fill="none" stroke="indigo" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            <polyline points="10 9 9 9 8 9"></polyline>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <h4 class="fw-bold text-dark mb-0">Ôn tập toàn bộ câu hỏi</h4>
+                            </div>
+                            <div class="position-absolute top-0 start-0 m-3">
+                                <div class="selectedLoai bg-success text-white fw-bold px-3 py-2 rounded-pill d-inline-block">${item.tenLoai}</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>`;
+                        });
+
+                        $('#bangLaiContainer').html(html);
+                    }
+
+                    function filterLoai(loai) {
+                        $('.bangLaiCard').hide();
+                        $(`.bangLaiCard[data-tenloai="${loai}"]`).show();
+                    }
+
+                    function updateSelectedLoaiText(loai) {
+                        $('.bangLaiCard:visible .selectedLoai').text(loai);
+                    }
+                })
+                .catch(err => {
+                    $('#bangLaiContainer').html('<div class="alert alert-danger text-center">Lỗi tải dữ liệu!</div>');
+                    console.error(err);
+                });
+        });
+            async function lamDeNgauNhien(loaiBangLaiId) {
+            try {
+                const res = await fetch(`/api/BaiThi/de-thi-ngau-nhien/${loaiBangLaiId}`);
+                const data = await res.json();
+
+                if (!res.ok) {
+                    alert(data.message || "Không tìm thấy đề thi phù hợp!");
+                    return;
+                }
+
+                // Chuyển hướng sang trang làm bài thi
+                window.location.href = `/BaiThi/LamBaiThi?baiThiId=${data.id}`;
+            } catch (err) {
+                console.error(err);
+                alert("Lỗi khi lấy đề thi ngẫu nhiên.");
+            }
+        }
+    </script>
+}

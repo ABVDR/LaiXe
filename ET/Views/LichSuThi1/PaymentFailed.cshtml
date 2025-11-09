@@ -1,0 +1,15 @@
+﻿@{
+    ViewData["Title"] = "Thanh toán thất bại";
+    var error = ViewData["Error"]?.ToString() ?? "Không rõ nguyên nhân";
+}
+
+<div class="container text-center" style="margin-top: 80px;">
+    <h2 class="text-danger">❌ Thanh toán thất bại</h2>
+    <p>Giao dịch không thành công.</p>
+    <p class="text-muted">Lý do: <strong>@error</strong></p>
+
+    <div class="mt-4">
+        <a href="/LichSuThi1/LuyenLaiCauSai" class="btn btn-outline-primary">Quay lại luyện lại câu sai</a>
+        <a href="/LichSuThi1" class="btn btn-outline-secondary ms-2">Trang lịch sử thi</a>
+    </div>
+</div>

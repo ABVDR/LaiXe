@@ -1,0 +1,47 @@
+﻿@{
+    ViewData["Title"] = "Đăng ký";
+    Layout = "~/Views/Shared/_PublicLayout.cshtml";
+}
+
+<div class="d-flex justify-content-center align-items-center min-vh-100 bg-light">
+    <div class="card shadow-lg p-4" style="width: 100%; max-width: 450px;">
+        <div class="text-center mb-3">
+            <img src="~/images/hutech_logo.png" alt="HUTECH logo" class="img-fluid mb-2" style="height: 60px;" />
+            <h4 class="fw-bold">Tạo tài khoản mới</h4>
+        </div>
+
+        <form onsubmit="register(event)">
+            <div id="registerError" class="text-danger mb-3" style="display: none;"></div>
+
+            <div class="mb-3">
+                <label for="Username" class="form-label">Tên đăng nhập</label>
+                <input id="Username" class="form-control" placeholder="Tên đăng nhập" required />
+            </div>
+
+            <div class="mb-3">
+                <label for="Email" class="form-label">Email</label>
+                <input id="Email" type="email" class="form-control" placeholder="example@email.com" required />
+            </div>
+
+            <div class="mb-3">
+                <label for="Password" class="form-label">Mật khẩu</label>
+                <input id="Password" type="password" class="form-control" placeholder="Mật khẩu" required />
+            </div>
+
+            <div class="mb-3">
+                <label for="ConfirmPassword" class="form-label">Xác nhận mật khẩu</label>
+                <input id="ConfirmPassword" type="password" class="form-control" placeholder="Nhập lại mật khẩu" required />
+            </div>
+
+            <button type="submit" class="btn btn-success w-100">Đăng ký</button>
+        </form>
+
+        <div class="text-center my-3">
+            <span class="text-muted">hoặc</span>
+        </div>
+
+        <button onclick="googleLogin()" class="btn btn-outline-danger w-100">
+            <i class="bi bi-google me-2"></i> Đăng ký bằng Google
+        </button>
+    </div>
+</div>

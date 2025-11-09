@@ -1,0 +1,167 @@
+﻿@{
+    ViewData["Title"] = "Ôn Tập";
+}
+
+<div class="container mt-4" style="max-width: 900px;">
+    <h2 class="text-center fw-bold mb-4" style="color: #2C3E50;">
+        Ôn Tập  <span id="tenLoai" class="text-primary"></span>
+    </h2>
+
+    <div id="cauHoiContainer">
+        <div class="text-center text-muted">Đang tải câu hỏi...</div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const params = new URLSearchParams(window.location.search);
+            const loaiBangLaiId = params.get("loaiBangLaiId");
+
+            if (!loaiBangLaiId) {
+                document.getElementById("cauHoiContainer").innerHTML =
+                    '<div class="alert alert-danger text-center">❌ Thiếu tham số `loaiBangLaiId` trên URL.</div>';
+                return;
+            }
+
+            fetch(`/api/BaiThi/on-tap/${loaiBangLaiId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!Array.isArray(data) || data.length === 0) {
+                        document.getElementById("cauHoiContainer").innerHTML =
+                            '<p class="text-muted text-center">🚫 Không có câu hỏi nào cho loại bằng lái này.</p>';
+                        return;
+                    }
+
+                    let html = '<div class="row g-3">';
+                    data.forEach((cauHoi, index) => {
+                        html += `
+                            <div class="col-12">
+                                <div class="question-card" id="cauHoi_${cauHoi.id}">
+                                    <h5 class="question-title">Câu ${index + 1}: ${cauHoi.noiDung}</h5>
+                                    ${cauHoi.mediaUrl ? `<div class="text-center my-3"><img src="${cauHoi.mediaUrl}" alt="Hình ảnh câu hỏi" class="question-image" /></div>` : ''}
+                                    <div class="options-list">
+                                        ${['A', 'B', 'C', 'D'].map(k => {
+                                            const noiDung = cauHoi[`luaChon${k}`];
+                                            return noiDung ? `
+                                                <label class="option-item" id="label_${cauHoi.id}${k}">
+                                                    <input type="radio" name="cau_${cauHoi.id}" value="${k}"
+                                                        onchange="kiemTraDapAn('${cauHoi.id}', '${k}', '${cauHoi.dapAnDung}', \`${cauHoi.giaiThich ?? ''}\`)">
+                                                    <span>${k}. ${noiDung}</span>
+                                                </label>` : '';
+                                        }).join('')}
+                                    </div>
+                                    <p id="ketQua_${cauHoi.id}" class="result-message"></p>
+                                    <div id="giaiThich_${cauHoi.id}" class="explanation-box" style="display: none;"></div>
+                                </div>
+                            </div>`;
+                    });
+                    html += '</div>';
+                    document.getElementById("cauHoiContainer").innerHTML = html;
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById("cauHoiContainer").innerHTML =
+                        '<div class="alert alert-danger text-center">Lỗi tải dữ liệu câu hỏi.</div>';
+                });
+        });
+
+        function kiemTraDapAn(cauHoiId, dapAnNguoiDung, dapAnDung, giaiThich) {
+            const ketQuaElement = document.getElementById(`ketQua_${cauHoiId}`);
+            const giaiThichElement = document.getElementById(`giaiThich_${cauHoiId}`);
+            const allLabels = document.querySelectorAll(`#cauHoi_${cauHoiId} .option-item`);
+            allLabels.forEach(label => label.classList.remove('correct', 'wrong', 'selected'));
+
+            const userLabel = document.getElementById(`label_${cauHoiId}${dapAnNguoiDung}`);
+            userLabel.classList.add('selected');
+
+            if (dapAnNguoiDung === dapAnDung) {
+                ketQuaElement.innerHTML = " Đúng rồi!";
+                ketQuaElement.className = "result-message success";
+                userLabel.classList.add('correct');
+            } else {
+                ketQuaElement.innerHTML = ` Sai! Đáp án đúng là: <strong>${dapAnDung}</strong>`;
+                ketQuaElement.className = "result-message error";
+                userLabel.classList.add('wrong');
+
+                const correctLabel = document.getElementById(`label_${cauHoiId}${dapAnDung}`);
+                correctLabel?.classList.add('correct');
+            }
+
+            giaiThichElement.innerHTML = `<strong>Giải thích:</strong> ${giaiThich}`;
+            giaiThichElement.style.display = 'block';
+        }
+    </script>
+}
+<style>
+    body {
+        background: #FAFAFA;
+        color: #2C3E50;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .question-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+    }
+
+    .question-title {
+        font-size: 1rem;
+        margin-bottom: 15px;
+    }
+
+    .question-image {
+        max-width: 80%;
+        border-radius: 8px;
+    }
+
+    .options-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .option-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid #CED4DA;
+    }
+
+        .option-item.correct {
+            background: #E8F5E9;
+            border: 2px solid #4CAF50;
+            font-weight: bold;
+        }
+
+        .option-item.wrong {
+            background: #FDECEA;
+            border: 2px solid #E74C3C;
+            font-weight: bold;
+        }
+
+    .result-message {
+        margin-top: 10px;
+        font-weight: bold;
+    }
+
+        .result-message.success {
+            color: #4CAF50;
+        }
+
+        .result-message.error {
+            color: #E74C3C;
+        }
+
+    .explanation-box {
+        background: #FFF3CD;
+        padding: 12px;
+        border-radius: 8px;
+        margin-top: 12px;
+    }
+</style>

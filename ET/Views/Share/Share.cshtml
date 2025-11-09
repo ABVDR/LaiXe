@@ -1,0 +1,360 @@
+﻿<div class="container mt-4">
+    <h2 class="mb-3">Câu Hỏi & Chia Sẻ</h2>
+    <p class="text-muted">Câu hỏi về ôn thi gplx, lý thuyết, mô phỏng và các chủ đề khác được chia sẻ tại đây.</p>
+
+    <form id="createShareForm" enctype="multipart/form-data" class="mb-5">
+        <div class="form-group mb-3">
+            <textarea id="editor" name="Content"></textarea>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <select name="Topic" class="form-select w-25" required>
+                <option value="">Chủ đề</option>
+                <option value="GPLX">GPLX</option>
+                <option value="Lý Thuyết">Lý Thuyết</option>
+                <option value="Mô Phỏng">Mô Phỏng</option>
+                <option value="Khác">Khác</option>
+            </select>
+            <button type="submit" class="btn btn-success">Chia Sẻ</button>
+        </div>
+    </form>
+
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <strong>Sắp xếp:</strong>
+            <button type="button" class="btn btn-link active" id="sortNewest">Mới nhất</button>
+            <button type="button" class="btn btn-link" id="sortOldest">Cũ nhất</button>
+        </div>
+        <form id="searchForm" class="input-group w-25">
+            <input type="text" id="searchBox" class="form-control" placeholder="Tìm kiếm..." />
+            <button type="submit" class="btn btn-outline-secondary">Tìm</button>
+        </form>
+    </div>
+
+    <div id="share-list"></div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+<script>
+    let currentUserId = null;
+
+    async function fetchCurrentUser() {
+        const res = await fetch('/api/Share/auth-status');
+        if (res.ok) {
+            const data = await res.json();
+            currentUserId = data.userId;
+        }
+    }
+
+    let sortOrder = "newest";
+    let searchString = "";
+
+    // Khởi tạo CKEditor cho textarea #editor
+    let mainEditor;
+    ClassicEditor.create(document.getElementById('editor'), {
+        ckfinder: { uploadUrl: '/api/Share/upload-image' }
+    }).then(editor => {
+        mainEditor = editor;
+    });
+
+    // Lấy danh sách chia sẻ từ API
+    async function loadShares() {
+        const res = await fetch(`/api/Share?sortOrder=${sortOrder}&searchString=${encodeURIComponent(searchString)}`);
+        if (res.status === 401) {
+            alert("Bạn cần đăng nhập để sử dụng chức năng này.");
+            window.location.href = "/Account/Login";
+            return;
+        }
+        const shares = await res.json();
+        renderShares(shares);
+        // Lưu cache vào sessionStorage
+        sessionStorage.setItem('shareListCache', JSON.stringify(shares));
+        sessionStorage.setItem('shareListCacheTime', Date.now());
+    }
+
+    // Render danh sách chia sẻ
+    function renderShares(shares) {
+        const container = document.getElementById('share-list');
+        if (!shares.length) {
+            container.innerHTML = "<div class='alert alert-info'>Chưa có chia sẻ nào.</div>";
+            return;
+        }
+        container.innerHTML = shares.map(share => `
+            <div class="card mb-4" data-share-id="${share.id}">
+                <div class="card-body">
+                    <div class="mb-2 d-flex align-items-center">
+                        <div class="fw-bold">Người dùng: ${share.userName ?? "Ẩn danh"}</div>
+                        <small class="text-muted ms-2">${share.topic} - ${formatDate(share.createdAt)}</small>
+                      ${share.userId !== currentUserId ? `
+                        <button class="btn btn-sm btn-warning ms-2 report-share-btn" data-id="${share.id}">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Báo cáo
+                        </button>` : ''}
+                    </div>
+                    <div class="share-content mb-2">${share.content}</div>
+                  ${share.userId === currentUserId ? `
+                    <button class="btn btn-danger btn-sm delete-share-btn" data-id="${share.id}">
+                        <i class="bi bi-trash3"></i> Xóa
+                    </button>` : ''}
+                    <button class="btn btn-sm btn-outline-primary toggle-share-reply-form mt-2" data-share-id="${share.id}">
+                        <i class="bi bi-reply"></i> Trả lời chia sẻ
+                    </button>
+                    <div class="reply-form d-none mt-2" id="share-reply-form-${share.id}">
+                        <form class="createReplyForm" data-share-id="${share.id}">
+                            <textarea name="content" class="form-control mb-2 reply-editor" id="reply-editor-${share.id}"></textarea>
+                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-send"></i> Gửi
+                            </button>
+                        </form>
+                    </div>
+                    <div class="replies" id="replies-${share.id}"></div>
+                </div>
+            </div>
+        `).join('');
+        // Khởi tạo sự kiện cho các nút
+        bindShareEvents();
+        // Tải replies cho từng share
+        shares.forEach(share => loadReplies(share.id));
+    }
+
+    // Lấy replies cho 1 share
+    async function loadReplies(shareId) {
+        const res = await fetch(`/api/Share/replies/${shareId}`);
+        if (res.status === 401) return;
+        const replies = await res.json();
+        renderReplies(shareId, replies);
+    }
+
+    // Render replies
+    function renderReplies(shareId, replies) {
+        const container = document.getElementById(`replies-${shareId}`);
+        if (!replies.length) {
+            container.innerHTML = "";
+            return;
+        }
+        container.innerHTML = replies.map(reply => `
+            <div class="ms-4 border-start ps-3 mb-2 reply-block" data-reply-id="${reply.id}">
+                <div class="d-flex align-items-center">
+                    <strong>${reply.userName ?? "Ẩn danh"}</strong>
+                    <small class="text-muted ms-2">${formatDate(reply.createdAt)}</small>
+                   ${reply.userId === currentUserId ? `
+                    <button class="btn btn-sm btn-danger ms-auto delete-reply-btn" data-id="${reply.id}">
+                        <i class="bi bi-trash3"></i> Xóa
+                    </button>` : ''}
+
+                     ${reply.userId !== currentUserId ? `
+                    <button class="btn btn-sm btn-warning ms-2 report-reply-btn" data-id="${reply.id}">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Báo cáo
+                    </button>` : ''}
+
+                </div>
+                <div class="share-content">${reply.content}</div>
+            </div>
+        `).join('');
+        bindReplyEvents();
+    }
+
+    // Định dạng ngày
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleString('vi-VN');
+    }
+
+    // Sự kiện cho chia sẻ
+    function bindShareEvents() {
+        // Xóa chia sẻ
+        document.querySelectorAll('.delete-share-btn').forEach(btn => {
+            btn.onclick = async function () {
+                if (!confirm('Bạn chắc chắn muốn xóa?')) return;
+                const id = btn.getAttribute('data-id');
+                const res = await fetch(`/api/Share/${id}`, { method: 'DELETE' });
+                if (res.status === 401) {
+                    alert("Bạn cần đăng nhập để xóa.");
+                    window.location.href = "/Account/Login";
+                    return;
+                }
+                const result = await res.json();
+                if (result.success) loadShares();
+                else alert(result.message);
+            };
+        });
+        // Báo cáo chia sẻ: chuyển hướng sang trang Sharereport
+        document.querySelectorAll('.report-share-btn').forEach(btn => {
+            btn.onclick = function () {
+                const id = btn.getAttribute('data-id');
+                window.location.href = `/Share/Sharereport?shareId=${id}`;
+            };
+        });
+        // Toggle form trả lời
+        document.querySelectorAll('.toggle-share-reply-form').forEach(btn => {
+            btn.onclick = function () {
+                const id = btn.getAttribute('data-share-id');
+                const formContainer = document.getElementById(`share-reply-form-${id}`);
+                formContainer.classList.toggle('d-none');
+                // Khởi tạo CKEditor 5 nếu chưa có
+                const textarea = formContainer.querySelector('textarea');
+                if (textarea && !textarea.classList.contains('ck-editor-initialized')) {
+                    ClassicEditor.create(textarea, {
+                        ckfinder: { uploadUrl: '/api/Share/upload-image' }
+                    }).then(editor => {
+                        textarea._ckEditorInstance = editor;
+                        textarea.classList.add('ck-editor-initialized');
+                    });
+                }
+            };
+        });
+
+        // Submit trả lời
+        document.querySelectorAll('.createReplyForm').forEach(form => {
+            form.onsubmit = async function (e) {
+                e.preventDefault();
+                const shareId = form.getAttribute('data-share-id');
+                const textarea = form.querySelector('textarea');
+                // Lấy nội dung từ CKEditor 5
+                const content = textarea._ckEditorInstance ? textarea._ckEditorInstance.getData() : textarea.value;
+                if (!content.trim()) return alert("Nội dung trả lời không được để trống.");
+                const fd = new FormData();
+                fd.append('shareId', shareId);
+                fd.append('content', content);
+                const res = await fetch('/api/Share/reply', { method: 'POST', body: fd });
+                if (res.status === 401) {
+                    alert("Bạn cần đăng nhập để trả lời.");
+                    window.location.href = "/Account/Login";
+                    return;
+                }
+                const result = await res.json();
+                if (result.success) {
+                    loadReplies(shareId);
+                    // Xóa nội dung CKEditor sau khi gửi
+                    if (textarea._ckEditorInstance) textarea._ckEditorInstance.setData('');
+                } else alert(result.message);
+            };
+        });
+    }
+
+    // Sự kiện cho replies
+    function bindReplyEvents() {
+        // Xóa reply
+        document.querySelectorAll('.delete-reply-btn').forEach(btn => {
+            btn.onclick = async function () {
+                if (!confirm('Bạn chắc chắn muốn xóa trả lời này?')) return;
+                const id = btn.getAttribute('data-id');
+                const res = await fetch(`/api/Share/reply/${id}`, { method: 'DELETE' });
+                if (res.status === 401) {
+                    alert("Bạn cần đăng nhập để xóa.");
+                    window.location.href = "/Account/Login";
+                    return;
+                }
+                const result = await res.json();
+                if (result.success) {
+                    btn.closest('.reply-block').remove();
+                } else alert(result.message);
+            };
+        });
+        // Báo cáo reply: chuyển hướng sang trang Sharereport
+        document.querySelectorAll('.report-reply-btn').forEach(btn => {
+            btn.onclick = function () {
+                const id = btn.getAttribute('data-id');
+                window.location.href = `/Share/Sharereport?replyId=${id}`;
+            };
+        });
+    }
+
+    // Sắp xếp
+    document.getElementById('sortNewest').onclick = function () {
+        sortOrder = "newest";
+        this.classList.add('active');
+        document.getElementById('sortOldest').classList.remove('active');
+        loadShares();
+    };
+    document.getElementById('sortOldest').onclick = function () {
+        sortOrder = "oldest";
+        this.classList.add('active');
+        document.getElementById('sortNewest').classList.remove('active');
+        loadShares();
+    };
+
+    // Tìm kiếm
+    document.getElementById('searchForm').onsubmit = function (e) {
+        e.preventDefault();
+        searchString = document.getElementById('searchBox').value;
+        loadShares();
+    };
+
+    // Gửi chia sẻ mới
+    document.getElementById('createShareForm').onsubmit = async function (e) {
+        e.preventDefault();
+        const fd = new FormData(this);
+        fd.set('Content', mainEditor.getData());
+        const res = await fetch('/api/Share/create', { method: 'POST', body: fd });
+        if (res.status === 401) {
+            alert("Bạn cần đăng nhập để chia sẻ.");
+            window.location.href = "/Account/Login";
+            return;
+        }
+        const result = await res.json();
+        if (result.success) {
+            mainEditor.setData('');
+            this.reset();
+            loadShares();
+        } else alert(result.message);
+    };
+
+    // Khi trang load: Hiển thị cache nếu có, sau đó luôn gọi API để cập nhật mới
+    document.addEventListener('DOMContentLoaded', async () => {
+        await fetchCurrentUser();
+
+        // Hiển thị cache nếu có
+        const cache = sessionStorage.getItem('shareListCache');
+        if (cache) {
+            try {
+                const shares = JSON.parse(cache);
+                renderShares(shares);
+            } catch {}
+        }
+        // Luôn gọi API để cập nhật dữ liệu mới nhất
+        loadShares();
+    });
+
+</script>
+<style>
+    .ck-editor__editable_inline {
+        min-height: 200px;
+    }
+
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .btn-danger {
+        background-color: #f44336;
+        border-color: #f44336;
+    }
+
+        .btn-danger:hover {
+            background-color: #d32f2f;
+            border-color: #d32f2f;
+        }
+
+    .share-content iframe {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .share-content img {
+        width: 400px !important;
+        height: 400px !important;
+        object-fit: contain;
+    }
+
+    .ck-editor__editable img {
+        width: 400px !important;
+        height: 400px !important;
+        object-fit: contain;
+    }
+
+    .btn-link.active {
+        font-weight: bold;
+        text-decoration: underline;
+    }
+</style>

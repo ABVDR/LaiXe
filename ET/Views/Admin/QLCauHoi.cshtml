@@ -1,0 +1,200 @@
+﻿@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h2>Danh sách câu hỏi</h2>
+        </div>
+        <div class="col text-end">
+            <a href="/Admin/CreateCauHoi" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Thêm câu hỏi mới
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <table id="cauHoiTable" class="display table table-striped table-hover" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Nội dung</th>
+                        <th>Đáp án đúng</th>
+                        <th>Loại bằng lái</th>
+                        <th>Chủ đề</th>
+                        <th style="width: 200px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#cauHoiTable').DataTable({
+                processing: true,
+                serverSide: true,
+                paging: true,
+                searching: true,
+                ajax: {
+                    url: '/api/CauHoi/paged-cau-hois',
+                    data: function (d) {
+                        return {
+                            page: (d.start / d.length) + 1,
+                            pageSize: d.length,
+                            search: d.search.value,
+                            sortCol: d.columns[d.order[0].column].data,
+                            sortDir: d.order[0].dir
+                        };
+                    },
+                    dataSrc: function (res) {
+                        return res.data;
+                    }
+                },
+                columns: [
+                    {
+                        data: 'noiDung',
+                        render: function (data, type) {
+                            return type === 'display' && data && data.length > 100 ?
+                                data.substr(0, 100) + '...' : data || '';
+                        }
+                    },
+                    {
+                        data: 'dapAnDung',
+                        render: function (data) {
+                            return data || '<em>Không có đáp án</em>';
+                        }
+                    },
+                    {
+                        data: 'loaiBangLaiId',
+                        render: function (data) {
+                            return `<span class="loaiBangLai" data-id="${data}">${data}</span>`;
+                        }
+                    },
+                    {
+                        data: 'chuDeId',
+                        render: function (data) {
+                            return `<span class="chuDe" data-id="${data}">${data}</span>`;
+                        }
+                    },
+                    {
+                        data: 'id',
+                        orderable: false,
+                        render: function (data) {
+                            return `
+                                <div class="btn-group">
+                                    <a href="/Admin/DetailsCauHoi/${data}" class="btn btn-sm btn-info">
+                                        <i class="bi bi-eye"></i> Chi tiết
+                                    </a>
+                                    <a href="/Admin/EditCauHoi/${data}" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-pencil"></i> Sửa
+                                    </a>
+                                    <button onclick="deleteCauHoi('${data}')" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i> Xóa
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                ],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Vietnamese.json'
+                },
+                drawCallback: async function () {
+                    // Xử lý loại bằng lái
+                    const loaiBangLaiElements = document.querySelectorAll('.loaiBangLai');
+                    for (const element of loaiBangLaiElements) {
+                        const id = element.getAttribute('data-id');
+                        if (id) {
+                            try {
+                                const response = await fetch(`/api/LoaiBangLai/${id}`);
+                                if (response.ok) {
+                                    const data = await response.json();
+                                    if (data && data.tenLoai) {
+                                        element.textContent = data.tenLoai;
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error fetching loai bang lai:', error);
+                            }
+                        }
+                    }
+
+                    // Xử lý chủ đề
+                    const chuDeElements = document.querySelectorAll('.chuDe');
+                    for (const element of chuDeElements) {
+                        const id = element.getAttribute('data-id');
+                        if (id) {
+                            try {
+                                const response = await fetch(`/api/ChuDe/ten/${id}`);
+                                if (response.ok) {
+                                    const data = await response.json();
+                                    if (data && data.tenChuDe) {
+                                        element.textContent = data.tenChuDe;
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error fetching chu de:', error);
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        async function deleteCauHoi(id) {
+            const result = await Swal.fire({
+                title: 'Bạn có chắc chắn?',
+                text: "Bạn sẽ không thể khôi phục lại dữ liệu này!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`/api/CauHoi/delete/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + getToken(),
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.status) {
+                            await Swal.fire('Đã xóa!', 'Câu hỏi đã được xóa thành công.', 'success');
+                            $('#cauHoiTable').DataTable().ajax.reload();
+                        } else {
+                            await Swal.fire('Lỗi!', data.message || 'Không thể xóa câu hỏi.', 'error');
+                        }
+                    } else {
+                        await Swal.fire('Lỗi!', 'Đã xảy ra lỗi khi xóa câu hỏi.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error deleting cau hoi:', error);
+                    await Swal.fire('Lỗi!', 'Đã xảy ra lỗi khi xóa câu hỏi.', 'error');
+                }
+            }
+        }
+
+        function getToken() {
+            return localStorage.getItem('jwtToken') || '';
+        }
+    </script>
+}

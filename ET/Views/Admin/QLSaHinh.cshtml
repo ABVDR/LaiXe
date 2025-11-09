@@ -1,0 +1,114 @@
+﻿@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách bài sa hình</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2 class="mb-4 text-primary">Danh sách bài sa hình</h2>
+
+        <!-- Form lọc -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Lọc theo loại bằng lái:</label>
+            </div>
+            <div class="col-md-4">
+                <select id="filterLoaiBangLai" class="form-select"></select>
+            </div>
+        </div>
+
+        <!-- Nút thêm mới -->
+        <div class="mb-4">
+            <a href="/Admin/CreateSaHinh" class="btn btn-primary btn-action"><i class="fas fa-plus"></i> Thêm bài sa hình</a>
+        </div>
+
+        <!-- Bảng danh sách -->
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Tên bài</th>
+                        <th>Loại bằng lái</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="baiSaHinhTableBody">
+                    <!-- Nội dung sẽ được thêm qua JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function loadLoaiBangLaiDropdown() {
+            const res = await fetch('/api/LoaiBangLai/danh-sach');
+            const data = await res.json();
+            const select = document.getElementById('filterLoaiBangLai');
+            select.innerHTML = `<option value="">Tất cả</option>`;
+            data.forEach(loai => {
+                select.innerHTML += `<option value="${loai.id}">${loai.tenLoai}</option>`;
+            });
+        }
+
+        async function loadBaiSaHinh(loaiBangLaiId = '') {
+            const res = await fetch(`/api/SaHinh/paged-bai-sa-hinh?page=1&pageSize=50&search=&sortCol=&sortDir=&loaiBangLaiId=${loaiBangLaiId}`);
+            const result = await res.json();
+
+            const tbody = document.getElementById('baiSaHinhTableBody');
+            tbody.innerHTML = '';
+
+            if (!result.data || result.data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">Không có dữ liệu</td></tr>`;
+                return;
+            }
+
+            result.data.forEach(bai => {
+                const tr = document.createElement('tr');
+                      tr.innerHTML = `
+            <td>Bài ${bai.order}: ${bai.tenBai}</td>
+            <td>${bai.loaiBangLai?.tenLoai || ''}</td>
+            <td class="text-center">
+                <a href="/Admin/DetailsSaHinh/${bai.id}" class="btn btn-sm btn-info btn-action"><i class="fas fa-eye"></i> Chi tiết</a>
+                <a href="/Admin/EditSaHinh/${bai.id}" class="btn btn-sm btn-warning btn-action"><i class="fas fa-edit"></i> Sửa</a>
+                <a href="javascript:void(0);" class="btn btn-sm btn-danger btn-action" onclick="deleteBaiSaHinh('${bai.id}')"><i class="fas fa-trash"></i> Xóa</a>
+            </td>
+        `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function deleteBaiSaHinh(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa bài sa hình này?')) return;
+
+            const response = await fetch(`/api/SaHinh/delete/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const result = await response.json();
+            if (result.status) {
+                alert('Xóa thành công!');
+                loadBaiSaHinh(document.getElementById('filterLoaiBangLai').value);
+            } else {
+                alert('Lỗi: ' + result.message);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadLoaiBangLaiDropdown();
+            await loadBaiSaHinh();
+
+            document.getElementById('filterLoaiBangLai').addEventListener('change', (e) => {
+                loadBaiSaHinh(e.target.value);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+﻿@{
+    ViewData["Title"] = "Chi tiết bài sa hình";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary">
+        <i class="fas fa-info-circle"></i> Chi tiết bài sa hình
+    </h2>
+
+    <div class="card">
+        <div class="card-body">
+            <dl class="dl-horizontal row">
+                <dt class="col-sm-3">Tên bài:</dt>
+                <dd class="col-sm-9" id="tenBai"></dd>
+
+                <dt class="col-sm-3">Thứ tự:</dt>
+                <dd class="col-sm-9" id="order"></dd>
+
+                <dt class="col-sm-3">Nội dung:</dt>
+                <dd class="col-sm-9">
+                    <div class="content-box" id="noiDung"></div>
+                </dd>
+
+                <dt class="col-sm-3">Loại bằng lái:</dt>
+                <dd class="col-sm-9" id="loaiBangLai"></dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="/Admin/QLSaHinh" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const id = window.location.pathname.split('/').pop();
+            fetch(`/api/SaHinh/${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status && data.data) {
+                        const bai = data.data;
+                        document.getElementById('tenBai').innerText = `Bài ${bai.order}: ${bai.tenBai}`;
+                        document.getElementById('order').innerText = bai.order;
+                        document.getElementById('noiDung').innerHTML = bai.noiDung;
+                        document.getElementById('loaiBangLai').innerText = bai.loaiBangLai?.tenLoai || '';
+                    } else {
+                        alert('Không tìm thấy bài sa hình!');
+                        window.location.href = '/Admin/QLSaHinh';
+                    }
+                })
+                .catch(() => {
+                    alert('Lỗi khi tải dữ liệu!');
+                    window.location.href = '/Admin/QLSaHinh';
+                });
+        });
+    </script>
+}

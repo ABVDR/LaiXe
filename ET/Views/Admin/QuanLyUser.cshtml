@@ -1,0 +1,92 @@
+﻿@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h2>Danh sách người dùng</h2>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <table id="userTable" class="display table table-striped table-hover" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th style="width: 150px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function () {
+            $('#userTable').DataTable({
+                processing: true,
+                serverSide: true,
+                paging: true,
+                searching: true,
+                ajax: {
+                    url: '/api/Manager/paged-users',
+                    data: function (d) {
+                        return {
+                            page: (d.start / d.length) + 1,
+                            pageSize: d.length,
+                            search: d.search.value,
+                            sortCol: d.columns[d.order[0].column].data,
+                            sortDir: d.order[0].dir
+                        };
+                    },
+                    dataSrc: function (res) {
+                        return res.data;
+                    }
+                },
+                columns: [
+                    {
+                        data: 'userName',
+                        render: function (data) {
+                            return data || '<em>Chưa có</em>';
+                        }
+                    },
+                    {
+                        data: 'email',
+                        render: function (data) {
+                            return data || '<em>Chưa có</em>';
+                        }
+                    },
+                    {
+                        data: 'id',
+                        orderable: false,
+                        render: function (data) {
+                            return `
+                                <div class="btn-group">
+                                    <a href="/Admin/DetailsUser/${data}" class="btn btn-sm btn-info">
+                                        <i class="bi bi-eye"></i> Chi tiết
+                                    </a>
+                                </div>
+                            `;
+                        }
+                    }
+                ],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Vietnamese.json'
+                }
+            });
+        });
+
+        function getToken() {
+            return localStorage.getItem('jwtToken') || '';
+        }
+    </script>
+}

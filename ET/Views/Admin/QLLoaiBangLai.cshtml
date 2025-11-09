@@ -1,0 +1,184 @@
+﻿@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h2>Danh sách loại bằng lái</h2>
+        </div>
+        <div class="col text-end">
+            <a href="/Admin/CreateLoaiBangLai" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Thêm loại bằng lái mới
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <table id="loaiBangLaiTable" class="display table table-striped table-hover" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Tên loại</th>
+                        <th>Mô tả</th>
+                        <th>Loại xe</th>
+                        <th>Thời gian thi</th>
+                        <th>Điểm tối thiểu</th>
+                        <th style="width: 200px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#loaiBangLaiTable').DataTable({
+                processing: true,
+                serverSide: true,
+                paging: true,
+                searching: true,
+                ajax: function (data, callback, settings) {
+                    var page = (data.start / data.length) + 1;
+                    fetch('/api/loaibanglai/paged-loai-bang-lai?' + new URLSearchParams({
+                        page: page,
+                        pageSize: data.length,
+                        search: data.search.value,
+                        sortCol: data.columns[data.order[0].column].data,
+                        sortDir: data.order[0].dir
+                    }))
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Lỗi khi tải danh sách loại bằng lái');
+                            }
+                            return response.json();
+                        })
+                        .then(res => {
+                            callback({
+                                recordsTotal: res.recordsTotal,
+                                recordsFiltered: res.recordsFiltered,
+                                data: res.data
+                            });
+                        })
+                        .catch(error => {
+                            Swal.fire(
+                                'Lỗi!',
+                                'Đã xảy ra lỗi khi tải danh sách loại bằng lái.',
+                                'error'
+                            );
+                            console.error('Error fetching loai bang lai list:', error);
+                        });
+                },
+                columns: [
+                    {
+                        data: 'tenLoai',
+                        render: function(data, type, row) {
+                            return type === 'display' && data.length > 50 ?
+                                data.substr(0, 50) + '...' : data;
+                        }
+                    },
+                    {
+                        data: 'moTa',
+                        render: function(data, type, row) {
+                            return data ? data : '<em>Không có mô tả</em>';
+                        }
+                    },
+                    { data: 'loaiXe' },
+                    { data: 'thoiGianThi' },
+                    { data: 'diemToiThieu' },
+                    {
+                        data: 'id',
+                        orderable: false,
+                        render: function (data, type, row) {
+                            return `
+                                <div class="btn-group" role="group">
+                                    <a href="/Admin/DetailsLoaiBangLai/${data}" class="btn btn-sm btn-info">
+                                        <i class="bi bi-eye"></i> Chi tiết
+                                    </a>
+                                    <a href="/Admin/EditLoaiBangLai/${data}" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-pencil"></i> Sửa
+                                    </a>
+                                    <button onclick="deleteLoaiBangLai('${data}')" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i> Xóa
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                ],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Vietnamese.json'
+                }
+            });
+        });
+
+        // Hàm xóa loại bằng lái với xác nhận
+        function deleteLoaiBangLai(id) {
+            Swal.fire({
+                title: 'Bạn có chắc chắn?',
+                text: "Bạn sẽ không thể khôi phục lại dữ liệu này!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/api/loaibanglai/delete/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + getToken()
+                        }
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Lỗi khi xóa loại bằng lái');
+                            }
+                            return response.json();
+                        })
+                        .then(response => {
+                            if (response.status) {
+                                Swal.fire(
+                                    'Đã xóa!',
+                                    'Loại bằng lái đã được xóa thành công.',
+                                    'success'
+                                );
+                                $('#loaiBangLaiTable').DataTable().ajax.reload();
+                            } else {
+                                Swal.fire(
+                                    'Lỗi!',
+                                    response.message || 'Không thể xóa loại bằng lái.',
+                                    'error'
+                                );
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire(
+                                'Lỗi!',
+                                'Đã xảy ra lỗi khi xóa loại bằng lái.',
+                                'error'
+                            );
+                            console.error('Error deleting loai bang lai:', error);
+                        });
+                }
+            });
+        }
+
+        // Lấy JWT token từ localStorage hoặc nơi lưu trữ khác
+        function getToken() {
+            return localStorage.getItem('jwtToken') || '';
+        }
+    </script>
+}

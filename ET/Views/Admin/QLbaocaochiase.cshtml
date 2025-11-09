@@ -1,0 +1,94 @@
+﻿@{
+    ViewData["Title"] = "Quản lý Báo cáo Nội dung";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2>Quản lý Báo cáo Nội dung</h2>
+
+<style>
+    .report-content img {
+        max-width: 200px;
+        height: auto;
+    }
+</style>
+
+<table class="table table-bordered table-striped" id="reports-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>NỘI DUNG BỊ BÁO CÁO</th>
+            <th>LÝ DO</th>
+            <th>NGÀY BÁO CÁO</th>
+            <th>THAO TÁC</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Dữ liệu sẽ được render bằng JavaScript -->
+    </tbody>
+</table>
+
+<script>
+    async function fetchReports() {
+        const response = await fetch('/api/Share/reports', {
+            headers: { 'Accept': 'application/json' }
+        });
+        if (!response.ok) {
+            alert('Không thể tải danh sách báo cáo!');
+            return [];
+        }
+        return await response.json();
+    }
+
+         function renderReports(reports) {
+        const tbody = document.querySelector('#reports-table tbody');
+        tbody.innerHTML = '';
+        reports.forEach(report => {
+            let contentId = '';
+            if (report.type === 'share' && report.shareId) {
+                contentId = report.shareId;
+            } else if (report.type === 'reply' && report.replyId) {
+                contentId = report.replyId;
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${report.id}</td>
+                <td>
+                    <div class="report-content">${report.content}</div>
+                </td>
+                <td>${report.reason}</td>
+                <td>${new Date(report.createdAt).toLocaleString('vi-VN')}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" onclick="deleteContent('${report.type}', '${contentId}')">Xóa</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+      async function deleteContent(type, id) {
+        if (!confirm('Bạn có chắc muốn xóa nội dung này?')) return;
+        const formData = new FormData();
+        formData.append('type', type);
+        formData.append('id', id);
+
+        const response = await fetch('/api/Share/delete-content', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+            alert('Đã xóa thành công!');
+            loadReports();
+        } else {
+            alert('Xóa thất bại!');
+        }
+    }
+
+    async function loadReports() {
+        const reports = await fetchReports();
+        renderReports(reports);
+    }
+
+    document.addEventListener('DOMContentLoaded', loadReports);
+</script>

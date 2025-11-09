@@ -1,0 +1,384 @@
+﻿@{
+    ViewData["Title"] = "Quản lý đề thi";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Quản lý đề thi</h2>
+        <div>
+            <button type="button" class="btn btn-outline-primary" id="btnRefresh">
+                <i class="fas fa-sync-alt me-1"></i> Làm mới
+            </button>
+            <button type="button" class="btn btn-primary" onclick="filterDeThiByLoai()">
+                <i class="fas fa-filter me-1"></i> Lọc theo loại
+            </button>
+            <a href="@Url.Action("ThemDeThi", "Admin")" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i> Thêm đề thi mới
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="mb-3">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <select id="loaiBangLaiFilter" class="form-select">
+                            <option value="">Tất cả loại bằng lái</option>
+                            <!-- Sẽ được điền bởi JavaScript -->
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Tìm kiếm theo tên đề thi...">
+                            <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">STT</th>
+                            <th scope="col">Tên đề thi</th>
+                            <th scope="col">Loại bằng lái</th>
+                            <th scope="col">Số câu hỏi</th>
+                            <th scope="col">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="danhSachDeThiBody">
+                        <tr>
+                            <td colspan="5" class="text-center py-3">Đang tải dữ liệu...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xác nhận xoá -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xoá</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xoá đề thi "<span id="deleteExamName" class="fw-bold"></span>"?</p>
+                <p class="text-danger">Lưu ý: Hành động này không thể khôi phục.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huỷ</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Xoá</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let allDeThis = [];
+        let loaiBangLais = [];
+        let deleteExamId = null;
+        let deleteModal = null;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Khởi tạo Modal
+            deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+            // Load dữ liệu
+            loadDeThiList();
+            loadLoaiBangLai();
+
+            // Xử lý tìm kiếm
+            document.getElementById("searchInput").addEventListener("keyup", function (e) {
+                if (e.key === "Enter") {
+                    filterData();
+                }
+            });
+            document.getElementById("searchBtn").addEventListener("click", filterData);
+
+            // Lọc theo loại bằng lái
+            document.getElementById("loaiBangLaiFilter").addEventListener("change", filterData);
+
+            // Nút làm mới
+            document.getElementById("btnRefresh").addEventListener("click", function() {
+                loadDeThiList(true);
+            });
+        });
+
+        
+        function loadDeThiList(forceRefresh = false) {
+            // Hiển thị trạng thái loading
+            document.getElementById("danhSachDeThiBody").innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <div class="mt-2">Đang tải danh sách đề thi...</div>
+                    </td>
+                </tr>`;
+
+            // Tạo URL kèm tham số chống cache nếu cần
+            // SỬA: Thay đổi đường dẫn API từ /api/BaiThi/danh-sach thành /api/BaiThi/danh-sach-de-thi
+            const url = forceRefresh
+                ? `/api/BaiThi/danh-sach-de-thi?timestamp=${new Date().getTime()}`
+                : '/api/BaiThi/danh-sach-de-thi';
+
+            fetch(url)
+                .then(res => {
+                    console.log(`[loadDeThiList] Response status: ${res.status}`);
+                    if (!res.ok) {
+                        return res.text().then(text => {
+                            let errorMessage = `Lỗi API (${res.status})`;
+                            try {
+                                const errorObj = JSON.parse(text);
+                                errorMessage = errorObj.message || errorObj.error || errorMessage;
+                            } catch(e) {
+                                errorMessage = text || errorMessage;
+                            }
+                            throw new Error(errorMessage);
+                        });
+                    }
+
+                    return res.json();
+                })
+                .then(data => {
+                    console.log(`[loadDeThiList] Data received:`, data);
+                    // Lưu dữ liệu toàn cục để dùng cho tìm kiếm và lọc
+                    allDeThis = Array.isArray(data) ? data : [];
+                    renderDeThiTable(allDeThis);
+                })
+                .catch(err => {
+                    console.error("[loadDeThiList] Error:", err);
+                    document.getElementById("danhSachDeThiBody").innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center text-danger py-3">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                Lỗi khi tải dữ liệu: ${err.message}
+                                <button class="btn btn-sm btn-outline-primary ms-3" onclick="loadDeThiList(true)">
+                                    <i class="fas fa-sync-alt me-1"></i> Thử lại
+                                </button>
+                            </td>
+                        </tr>`;
+                });
+        }
+
+        /**
+         * Tải danh sách loại bằng lái để lọc
+         */
+        function loadLoaiBangLai() {
+            fetch('/api/LoaiBangLai/danh-sach')  // Sửa URL này từ /api/LoaiBangLai thành /api/LoaiBangLai/danh-sach
+                .then(res => {
+                    if (!res.ok) throw new Error(`Lỗi API: ${res.status}`);
+                    return res.json();
+                })
+                .then(data => {
+                    loaiBangLais = Array.isArray(data) ? data : [];
+                    const select = document.getElementById("loaiBangLaiFilter");
+
+                    // Xóa các option cũ trừ option đầu tiên
+                    while (select.options.length > 1) {
+                        select.remove(1);
+                    }
+
+                    // Thêm option mới
+                    loaiBangLais.forEach(loai => {
+                        const option = document.createElement("option");
+                        option.value = loai.id;
+                        option.text = loai.tenLoai || "Không có tên";
+                        select.appendChild(option);
+                    });
+                })
+                .catch(err => {
+                    console.error("[loadLoaiBangLai] Lỗi khi tải loại bằng lái:", err);
+                });
+        }
+
+        /**
+         * Hiển thị dữ liệu đề thi lên bảng
+         */
+        function renderDeThiTable(data) {
+            if (!Array.isArray(data)) {
+                console.error("[renderDeThiTable] Data is not an array:", data);
+                data = [];
+            }
+
+            if (data.length === 0) {
+                document.getElementById("danhSachDeThiBody").innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-3">
+                            <i class="fas fa-info-circle me-2"></i> Không tìm thấy đề thi nào
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            let html = '';
+
+            data.forEach((item, index) => {
+                // Kiểm tra và bảo vệ dữ liệu để tránh lỗi
+                const tenBaiThi = htmlEncode(item.tenBaiThi || "Đề thi không có tên");
+                const id = item.id || "";
+                const loaiBangLai = htmlEncode(item.loaiBangLai || "Không xác định");
+                const soCauHoi = item.soCau || 0;
+
+                html += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${tenBaiThi}</td>
+                    <td>${loaiBangLai}</td>
+                    <td>${soCauHoi}</td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <a href="/Admin/ChiTietDeThi/${id}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i> Xem
+                            </a>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('${id}', '${tenBaiThi.replace(/'/g, "\\'")}')">
+                                <i class="fas fa-trash"></i> Xoá
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+
+            document.getElementById("danhSachDeThiBody").innerHTML = html;
+        }
+
+        /**
+         * Lọc dữ liệu theo tìm kiếm và loại bằng lái
+         */
+        function filterData() {
+            const searchTerm = document.getElementById("searchInput").value.toLowerCase().trim();
+            const loaiBangLaiId = document.getElementById("loaiBangLaiFilter").value;
+
+            if ((!searchTerm || searchTerm === "") && (!loaiBangLaiId || loaiBangLaiId === "")) {
+                // Nếu không có điều kiện lọc, hiển thị tất cả
+                renderDeThiTable(allDeThis);
+                return;
+            }
+
+            // Bắt đầu lọc từ dữ liệu gốc
+            let filtered = [...allDeThis];
+
+            // Lọc theo tên đề thi nếu có nhập
+            if (searchTerm) {
+                filtered = filtered.filter(item => {
+                    const tenBaiThi = (item.tenBaiThi || "").toLowerCase();
+                    return tenBaiThi.includes(searchTerm);
+                });
+            }
+
+            // Lọc theo loại bằng lái nếu có chọn
+            if (loaiBangLaiId) {
+                filtered = filtered.filter(item => {
+                    // Với API mới, chúng ta sẽ cần lọc theo loại bằng lái khác
+                    // Giả sử API trả về loaiBangLaiId trong dữ liệu
+                    return item.loaiBangLaiId === loaiBangLaiId;
+                });
+            }
+
+            renderDeThiTable(filtered);
+        }
+
+        /**
+         * Tập trung vào filter loại bằng lái
+         */
+        function filterDeThiByLoai() {
+            document.getElementById("loaiBangLaiFilter").focus();
+        }
+
+        /**
+         * Hiển thị modal xác nhận xóa
+         */
+        function showDeleteModal(id, name) {
+            document.getElementById('deleteExamName').textContent = name;
+            deleteExamId = id;
+
+            // Thiết lập hàm xóa cho nút xác nhận
+            document.getElementById('confirmDelete').onclick = function() {
+                deleteDeThi(deleteExamId);
+                deleteModal.hide();
+            };
+
+            deleteModal.show();
+        }
+
+        /**
+         * Gọi API xóa đề thi
+         */
+        function deleteDeThi(id) {
+            // Hiển thị loader hoặc disabled nút
+            document.getElementById('confirmDelete').disabled = true;
+            document.getElementById('confirmDelete').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xóa...';
+
+            fetch(`/api/BaiThi/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => {
+                if (!res.ok) {
+                    return res.text().then(text => {
+                        let errorMessage = "Lỗi khi xóa đề thi";
+                        try {
+                            const errorObj = JSON.parse(text);
+                            errorMessage = errorObj.message || errorObj.error || errorMessage;
+                        } catch(e) {
+                            if (text) errorMessage = text;
+                        }
+                        throw new Error(errorMessage);
+                    });
+                }
+
+                return res.text().then(text => {
+                    // Nhiều API có thể trả về chuỗi rỗng khi thành công
+                    if (!text || text.trim() === '') {
+                        return { success: true };
+                    }
+
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        return { success: true, message: text };
+                    }
+                });
+            })
+            .then(data => {
+                // Đóng modal và hiển thị thông báo thành công
+                alert('Xóa đề thi thành công!');
+
+                // Tải lại danh sách sau khi xóa thành công
+                loadDeThiList(true);
+            })
+            .catch(err => {
+                console.error('[deleteDeThi] Lỗi:', err);
+                alert(`Lỗi khi xóa đề thi: ${err.message}`);
+            })
+            .finally(() => {
+                // Khôi phục nút xóa về trạng thái ban đầu
+                document.getElementById('confirmDelete').disabled = false;
+                document.getElementById('confirmDelete').innerHTML = 'Xóa';
+            });
+        }
+
+        /**
+         * Mã hóa HTML để tránh XSS
+         */
+        function htmlEncode(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    </script>
+}

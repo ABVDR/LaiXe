@@ -1,0 +1,745 @@
+﻿@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h2>Sửa mô phỏng</h2>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form id="moPhongForm">
+                <input type="hidden" id="moPhongId" />
+
+                <div class="mb-3">
+                    <label for="noiDung" class="form-label">Nội dung <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="noiDung" rows="4" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="videoFile" class="form-label">Video <span class="text-danger">*</span></label>
+                    <input type="file" class="form-control" id="videoFile" accept="video/mp4,video/webm,video/ogg,video/quicktime">
+                    <div class="form-text">Chọn file video mới nếu muốn thay đổi (MP4, WebM, OGG, MOV)</div>
+                    <input type="hidden" id="videoUrl">
+                    <div id="videoUploadProgress" class="progress mt-2" style="display: none;">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <div id="videoPreviewContainer" class="mt-2 video-container" style="display: none;">
+                        <video id="videoPreview" controls style="width: 100%; height: auto;"></video>
+                        <figcaption class="progress-container">
+                            <label id="timer" for="progress" role="timer">00:00</label>
+                            <div class="markers-container">
+                                <progress id="progress" max="100" value="0">Progress</progress>
+                                <div id="markers"></div>
+                            </div>
+                        </figcaption>
+                        <div class="controls mt-2">
+                            <button type="button" id="resetMarkersBtn" class="btn btn-warning" style="display: none;">
+                                <i class="bi bi-arrow-repeat"></i> Làm lại mốc thời gian
+                            </button>
+                        </div>
+                    </div>
+                    <p class="mt-1 text-muted" id="currentVideoText"></p>
+                </div>
+
+                <div class="mb-3">
+                    <label for="dapAn" class="form-label">Đáp án <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="dapAn" rows="3" readonly></textarea>
+                    <div class="form-text">Nhấn phím cách (Space) để chọn 6 mốc thời gian. Đáp án sẽ tự động cập nhật.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="loaiBangLaiId" class="form-label">Loại bằng lái <span class="text-danger">*</span></label>
+                    <select class="form-select" id="loaiBangLaiId" required></select>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="/Admin/QLMoPhong" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Quay lại
+                    </a>
+                    <button type="button" id="btnSave" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+    .video-container {
+        position: relative;
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto 1.5em;
+        padding: 15px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    #videoPreview {
+        width: 100%;
+        height: auto;
+        max-height: 400px;
+        object-fit: contain;
+        display: block;
+        border-radius: 8px;
+    }
+
+    .progress-container {
+        align-items: center;
+        background: #f5f5f5;
+        padding: 0.75rem;
+        border-radius: 5px;
+        margin-top: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .markers-container {
+        position: relative;
+        width: 100%;
+        height: 20px;
+    }
+
+    #progress {
+        appearance: none;
+        border: none;
+        border-radius: 3px;
+        box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1) inset;
+        display: block;
+        height: 15px;
+        width: 100%;
+        margin: 0;
+    }
+
+        #progress::-webkit-progress-bar {
+            background-color: #e0e0e0;
+            border-radius: 3px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) inset;
+        }
+
+        #progress::-webkit-progress-value {
+            background-image: linear-gradient(to right, #ff6b6b, #ff8e53);
+            border-radius: 3px;
+            transition: width 0.2s ease;
+        }
+
+        #progress::-moz-progress-bar {
+            background-image: -moz-linear-gradient(to right, #ff6b6b, #ff8e53);
+            border-radius: 3px;
+            transition: width 0.2s ease;
+        }
+
+    #markers {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 15px;
+        pointer-events: none;
+    }
+
+    .marker {
+        position: absolute;
+        width: 2px;
+        height: 15px;
+        background-color: #ff4444;
+        transform: translateX(-50%);
+    }
+
+        .marker::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -4px;
+            width: 10px;
+            height: 10px;
+            background-color: #fff;
+            border-radius: 50%;
+            border: 2px solid #ff4444;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+    #timer {
+        text-align: center;
+        display: block;
+        margin-bottom: 8px;
+        font-size: 1.1rem;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .controls {
+        text-align: center;
+        margin-top: 1.5em;
+    }
+
+    button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        font-size: 1rem;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.2s, transform 0.1s;
+    }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+</style>
+
+<script>
+    $(document).ready(function () {
+        try {
+            // Lấy id từ URL
+            const moPhongId = getMoPhongIdFromUrl();
+            console.log("MoPhong ID:", moPhongId); // Debug
+            $('#moPhongId').val(moPhongId);
+
+            // Tải thông tin mô phỏng trước, sau đó tải danh sách loại bằng lái
+            loadMoPhongData().then(() => {
+                loadLoaiBangLai();
+            });
+
+            // Khởi tạo các biến
+            const video = document.getElementById("videoPreview");
+            const progress = document.getElementById("progress");
+            const timer = document.getElementById("timer");
+            const markersContainer = document.getElementById("markers");
+            const resetMarkersBtn = document.getElementById("resetMarkersBtn");
+            const colors = ['green', 'red', 'yellow', 'blue', 'purple'];
+            const scores = [5, 4, 3, 2, 1];
+            let userMarkers = [];
+            let predefinedMarkers = [];
+            let userScore = 0;
+            let readyToDraw = false;
+
+            // Cập nhật tiến trình video
+            function progressLoop() {
+                setInterval(function () {
+                    if (video.duration > 0 && !isNaN(video.duration)) {
+                        progress.value = (video.currentTime / video.duration) * 100;
+                        const minutes = Math.floor(video.currentTime / 60);
+                        const seconds = Math.floor(video.currentTime % 60);
+                        timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                }, 100);
+            }
+
+            // Xử lý sự kiện khi chọn file video
+            $('#videoFile').change(function () {
+                console.log("Video file selected"); // Debug
+                const file = this.files[0];
+                if (file) {
+                    const videoUrl = URL.createObjectURL(file);
+                    $('#videoPreview').attr('src', videoUrl);
+                    $('#videoPreviewContainer').show();
+                    $('#resetMarkersBtn').show();
+                    userMarkers = [];
+                    predefinedMarkers = [];
+                    userScore = 0;
+                    $('#dapAn').val('');
+                    markersContainer.innerHTML = '';
+                    uploadVideo(file);
+
+                    // Khởi tạo video khi upload mới
+                    video.addEventListener("loadedmetadata", () => {
+                        console.log("Video metadata loaded, duration:", video.duration); // Debug
+                        readyToDraw = true;
+                        drawMarkers();
+                        progressLoop();
+                    }, { once: true });
+
+                    video.addEventListener("error", () => {
+                        console.error("Lỗi tải video khi chọn file mới:", videoUrl);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: 'Không thể tải video mới. Vui lòng kiểm tra định dạng file.'
+                        });
+                    }, { once: true });
+                }
+            });
+
+            // Xử lý sự kiện phím cách để đánh dấu mốc thời gian
+            document.addEventListener("keydown", (e) => {
+                const tag = e.target.tagName.toLowerCase();
+                const isTyping = tag === 'input' || tag === 'textarea' || e.target.isContentEditable;
+                if (isTyping) return;
+
+                if (e.code === "Space") {
+                    e.preventDefault();
+                    if (!readyToDraw) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Video chưa sẵn sàng',
+                            text: 'Vui lòng chờ video tải hoàn tất!'
+                        });
+                        return;
+                    }
+                    if (userMarkers.length >= 6) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Đã đủ mốc',
+                            text: 'Bạn đã chọn đủ 6 mốc thời gian!'
+                        });
+                        return;
+                    }
+
+                    const currentTime = video.currentTime;
+                    userMarkers.push(currentTime);
+                    userMarkers.sort((a, b) => a - b);
+
+                    predefinedMarkers = [];
+                    for (let i = 0; i < userMarkers.length - 1; i++) {
+                        predefinedMarkers.push({
+                            start: userMarkers[i],
+                            end: userMarkers[i + 1],
+                            score: scores[i],
+                            color: colors[i % colors.length]
+                        });
+                    }
+
+                    // Tính điểm
+                    userScore = 0;
+                    userMarkers.forEach(time => {
+                        predefinedMarkers.forEach(marker => {
+                            if (time >= marker.start && time <= marker.end) {
+                                userScore += marker.score;
+                            }
+                        });
+                    });
+
+                    $('#dapAn').val(userMarkers.join(','));
+                    drawMarkers();
+                }
+            });
+
+            // Xử lý nút làm lại mốc thời gian
+            resetMarkersBtn.addEventListener("click", () => {
+                userMarkers = [];
+                predefinedMarkers = [];
+                userScore = 0;
+                $('#dapAn').val('');
+                markersContainer.innerHTML = '';
+                video.currentTime = 0;
+                video.play();
+                drawMarkers();
+            });
+
+            // Xử lý sự kiện nút Lưu
+            $('#btnSave').click(function () {
+                updateMoPhong();
+            });
+
+            // Hàm vẽ các marker
+            function drawMarkers() {
+                const duration = video.duration || 1;
+                if (isNaN(duration) || duration <= 0) {
+                    return;
+                }
+
+                markersContainer.innerHTML = '';
+
+                userMarkers.forEach(time => {
+                    const marker = document.createElement('span');
+                    marker.className = 'marker';
+                    const position = (time / duration) * 100;
+                    marker.style.left = `${position}%`;
+                    markersContainer.appendChild(marker);
+                });
+
+                predefinedMarkers.forEach(marker => {
+                    const range = document.createElement('div');
+                    range.style.position = 'absolute';
+                    range.style.backgroundColor = marker.color;
+                    range.style.opacity = '0.5';
+                    range.style.height = '5px';
+                    range.style.bottom = '0';
+                    const startPos = (marker.start / duration) * 100;
+                    const endPos = (marker.end / duration) * 100;
+                    range.style.left = `${startPos}%`;
+                    range.style.width = `${endPos - startPos}%`;
+                    markersContainer.appendChild(range);
+                });
+            }
+
+            // Hàm upload video
+            function uploadVideo(file) {
+                console.log("Uploading video:", file.name); // Debug
+                const formData = new FormData();
+                formData.append('file', file);
+
+                $('#videoUploadProgress').show();
+
+                fetch('/api/Upload/upload-video', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Authorization': 'Bearer ' + getToken()
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Lỗi khi upload video');
+                        }
+                        return response.json();
+                    })
+                    .then(response => {
+                        console.log("Upload video response:", response); // Debug
+                        if (response.status) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Upload thành công',
+                                text: 'Video đã được tải lên thành công',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                            $('#videoUrl').val(response.filePath);
+                            $('#currentVideoText').text('Video mới: ' + response.filePath);
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Lỗi',
+                                text: response.message || 'Không thể upload video'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Upload video error:", error); // Debug
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: error.message || 'Đã xảy ra lỗi khi upload video'
+                        });
+                    })
+                    .finally(() => {
+                        setTimeout(() => {
+                            $('#videoUploadProgress').hide();
+                        }, 1000);
+                    });
+            }
+
+            // Hàm lấy id từ URL
+            function getMoPhongIdFromUrl() {
+                const url = window.location.pathname;
+                const parts = url.split('/');
+                return parts[parts.length - 1];
+            }
+
+            // Hàm tải thông tin mô phỏng (trả về Promise để đảm bảo thứ tự thực thi)
+            function loadMoPhongData() {
+                return new Promise((resolve, reject) => {
+                    const id = $('#moPhongId').val();
+                    console.log("Đang tải mô phỏng với ID:", id); // Debug
+
+                    fetch(`/api/mophong/${id}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': 'Bearer ' + getToken()
+                        }
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Không thể tải thông tin mô phỏng');
+                            }
+                            return response.json();
+                        })
+                        .then(response => {
+                            console.log("Phản hồi API mô phỏng:", response); // Debug
+                            if (response.status && response.data) {
+                                const moPhong = response.data;
+                                console.log("Dữ liệu mô phỏng:", moPhong); // Debug
+
+                                // Gán dữ liệu vào form
+                                $('#noiDung').val(moPhong.noiDung || '');
+                                $('#videoUrl').val(moPhong.videoUrl || '');
+                                $('#dapAn').val(moPhong.dapAn || '');
+                                $('#moPhongId').data('moPhong', moPhong); // Lưu dữ liệu để sử dụng sau
+
+                                if (moPhong.videoUrl) {
+                                    $('#videoPreview').attr('src', moPhong.videoUrl);
+                                    $('#currentVideoText').text('Video hiện tại: ' + moPhong.videoUrl);
+                                    $('#videoPreviewContainer').show();
+                                    $('#resetMarkersBtn').show();
+
+                                    // Load markers từ đáp án
+                                    if (moPhong.dapAn) {
+                                        userMarkers = moPhong.dapAn.split(',').map(num => parseFloat(num.trim())).filter(num => !isNaN(num));
+                                        userMarkers.sort((a, b) => a - b);
+                                        console.log("User markers:", userMarkers); // Debug
+
+                                        // Tạo predefinedMarkers
+                                        predefinedMarkers = [];
+                                        for (let i = 0; i < userMarkers.length - 1; i++) {
+                                            predefinedMarkers.push({
+                                                start: userMarkers[i],
+                                                end: userMarkers[i + 1],
+                                                score: scores[i],
+                                                color: colors[i % colors.length]
+                                            });
+                                        }
+                                        console.log("Predefined markers:", predefinedMarkers); // Debug
+
+                                        // Tính điểm
+                                        userScore = 0;
+                                        userMarkers.forEach(time => {
+                                            predefinedMarkers.forEach(marker => {
+                                                if (time >= marker.start && time <= marker.end) {
+                                                    userScore += marker.score;
+                                                }
+                                            });
+                                        });
+                                    }
+
+                                    // Khởi tạo video
+                                    video.addEventListener("loadedmetadata", () => {
+                                        console.log("Video metadata loaded, duration:", video.duration); // Debug
+                                        readyToDraw = true;
+                                        drawMarkers();
+                                        progressLoop();
+                                    }, { once: true });
+
+                                    video.addEventListener("error", () => {
+                                        console.error("Lỗi tải video:", moPhong.videoUrl);
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi',
+                                            text: 'Không thể tải video từ: ' + moPhong.videoUrl
+                                        });
+                                    }, { once: true });
+                                } else {
+                                    $('#videoPreviewContainer').hide();
+                                    $('#resetMarkersBtn').hide();
+                                }
+                                resolve(moPhong); // Resolve Promise
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi',
+                                    text: 'Không thể tải thông tin mô phỏng'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        window.location.href = '/Admin/QLMoPhong';
+                                    }
+                                });
+                                reject(new Error('Không thể tải thông tin mô phỏng'));
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Lỗi API mô phỏng:", error); // Debug
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Lỗi',
+                                text: error.message || 'Đã xảy ra lỗi khi tải thông tin mô phỏng'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = '/Admin/QLMoPhong';
+                                }
+                            });
+                            reject(error);
+                        });
+                });
+            }
+
+            // Hàm tải danh sách loại bằng lái
+            function loadLoaiBangLai() {
+                fetch('/api/loaibanglai/get-loai-bang-lai-list', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + getToken()
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Không thể tải danh sách loại bằng lái');
+                        }
+                        return response.json();
+                    })
+                    .then(response => {
+                        console.log("Phản hồi API loại bằng lái:", response); // Debug
+                        if (response.status && response.data) {
+                            $('#loaiBangLaiId').empty();
+                            $('#loaiBangLaiId').append('<option value="">-- Chọn loại bằng lái --</option>');
+                            $.each(response.data, function (index, item) {
+                                $('#loaiBangLaiId').append(`<option value="${item.id}">${item.tenLoai}</option>`);
+                            });
+
+                            // Đặt lại giá trị loaiBangLaiId từ dữ liệu mô phỏng
+                            const moPhong = $('#moPhongId').data('moPhong');
+                            if (moPhong && moPhong.loaiBangLaiId) {
+                                const selectedValue = moPhong.loaiBangLaiId;
+                                console.log("Đặt loaiBangLaiId:", selectedValue); // Debug
+                                if ($('#loaiBangLaiId option[value="' + selectedValue + '"]').length > 0) {
+                                    $('#loaiBangLaiId').val(selectedValue);
+                                } else {
+                                    console.warn("loaiBangLaiId không tồn tại trong danh sách:", selectedValue);
+                                    Swal.fire({
+                                        icon: 'warning',
+                                        title: 'Cảnh báo',
+                                        text: 'Loại bằng lái của mô phỏng không có trong danh sách. Vui lòng chọn lại.'
+                                    });
+                                }
+                            } else {
+                                console.warn("moPhong hoặc loaiBangLaiId không tồn tại:", moPhong);
+                            }
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Lỗi',
+                                text: 'Không thể tải danh sách loại bằng lái'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Lỗi API loại bằng lái:", error); // Debug
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: error.message || 'Không thể tải danh sách loại bằng lái'
+                        });
+                    });
+            }
+
+            // Hàm cập nhật mô phỏng
+            function updateMoPhong() {
+                if (!validateForm()) {
+                    return;
+                }
+
+                const id = $('#moPhongId').val();
+                const moPhong = {
+                    id: id,
+                    noiDung: $('#noiDung').val(),
+                    videoUrl: $('#videoUrl').val(),
+                    dapAn: $('#dapAn').val(),
+                    loaiBangLaiId: $('#loaiBangLaiId').val()
+                };
+
+                console.log("Dữ liệu gửi để cập nhật:", moPhong); // Debug
+
+                fetch('/api/mophong/update', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + getToken()
+                    },
+                    body: JSON.stringify(moPhong)
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Không thể cập nhật mô phỏng');
+                        }
+                        return response.json();
+                    })
+                    .then(response => {
+                        console.log("Cập nhật mô phỏng response:", response); // Debug
+                        if (response.status) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Thành công',
+                                text: 'Cập nhật mô phỏng thành công',
+                                confirmButtonText: 'OK'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = '/Admin/QLMoPhong';
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Lỗi',
+                                text: response.message || 'Không thể cập nhật mô phỏng'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Cập nhật mô phỏng error:", error); // Debug
+                        let errorMsg = error.message || 'Đã xảy ra lỗi khi cập nhật mô phỏng';
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            html: errorMsg
+                        });
+                    });
+            }
+
+            // Kiểm tra form
+            function validateForm() {
+                const noiDung = $('#noiDung').val();
+                const videoUrl = $('#videoUrl').val();
+                const dapAn = $('#dapAn').val();
+                const loaiBangLaiId = $('#loaiBangLaiId').val();
+
+                if (!noiDung) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Vui lòng nhập nội dung mô phỏng'
+                    });
+                    return false;
+                }
+
+                if (!videoUrl) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Chưa có video. Vui lòng chọn và upload video'
+                    });
+                    return false;
+                }
+
+                if (!dapAn || userMarkers.length !== 6) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Vui lòng chọn đúng 6 mốc thời gian cho đáp án'
+                    });
+                    return false;
+                }
+
+                if (!loaiBangLaiId) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Vui lòng chọn loại bằng lái'
+                    });
+                    return false;
+                }
+
+                return true;
+            }
+
+            // Lấy JWT token
+            function getToken() {
+                const token = localStorage.getItem('jwtToken') || '';
+                console.log("JWT Token:", token); // Debug
+                return token;
+            }
+        } catch (e) {
+            console.error("Lỗi trong $(document).ready:", e);
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: 'Có lỗi xảy ra khi khởi tạo trang. Vui lòng kiểm tra console.'
+            });
+        }
+    });
+</script>

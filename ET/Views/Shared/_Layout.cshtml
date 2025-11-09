@@ -1,0 +1,167 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Thi trắc nghiệm lái xe">
+    <meta name="author" content="">
+
+    <title>Thi trắc nghiệm</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="~/assets/css/templatemo-seo-dream.css" rel="stylesheet"/>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link href="~/css/giadienthi.css" rel="stylesheet" />
+    <link href="~/css/ketqua.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+</head>
+
+<body>
+
+    <!-- ***** Header Start ***** -->
+    <header class="header-area sticky-top shadow-sm text-white" style="background: linear-gradient(90deg, #0056d2, #007bff);">
+
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light py-3">
+                <!-- Logo -->
+                <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/assets/images/logo-icon.png" alt="Logo" class="me-2" style="height: 35px;">
+                    <h4 class="mb-0">Lái Xe Chuẩn</h4>
+                </a>
+
+                <!-- Toggle button for mobile -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Navbar links -->
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto align-items-center gap-2">
+                        <li class="nav-item">
+                            <a class="nav-link " asp-area="" asp-controller="Home" asp-action="Index">Trang Chủ</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="LoaiBangLai" asp-action="XeMay">Xe máy</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="LoaiBangLai" asp-action="OTo">Ôtô</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="SaHinh" asp-action="Index">Sa hình</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="MoPhong" asp-action="Index">Mô Phỏng</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Share" asp-action="Share">Chia sẻ</a>
+                        </li>
+                        
+
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                           <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="LichSuThi1" asp-action="Index">
+                                Lịch Sử Thi </a>
+
+                            </li> <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="LichSuThi1" asp-action="LuyenLaiCauSai">
+                                Luyện Lại Câu sai </a>
+
+                            </li>
+                                    
+                            
+                            <div class="navbar-nav">
+                                <form onsubmit="logout(event)" class="d-inline">
+                                    <button type="submit" class="nav-link btn btn-link">Logout</button>
+                                </form>
+                            </div>
+                        }else{
+							<li class="nav-item">
+								<a class="nav-link" asp-area="" asp-controller="Account" asp-action="Login">Đăng Nhập</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link" asp-area="" asp-controller="Account" asp-action="Register">Đăng Ký</a>
+							</li>
+                        }
+                            @*  <li class="nav-item">
+                            <partial name="_LoginPartial" />
+                        </li>
+
+                        @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-danger fw-bold" asp-area="Admin" asp-controller="QuanLyCauHoi" asp-action="Index">
+                                    <i class="fas fa-tools me-1"></i> Trang Quản Trị
+                                </a>
+                            </li>
+                        }*@
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Chỉnh container để tránh bị header che -->
+    <div class="container content-container mt-4">
+        @RenderBody()
+    </div>
+
+    <!-- ***** Footer Start ***** -->
+    <footer class="mt-5 bg-light py-3">
+        <div class="container text-center">
+            <p class="mb-0">
+                Copyright © 2025 Lái Xe Chuẩn. All Rights Reserved.
+            </p>
+            <p class="mb-0">
+                Hàng ngàn người đã ôn luyện thành công cùng <a rel="nofollow" href="https://templatemo.com">Lái Xe Chuẩn</a>. Bạn đã sẵn sàng chinh phục kỳ thi chưa?
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    
+
+    <!-- jQuery (nếu cần) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Custom Scripts -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script src="~/js/auth.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+    <!-- Chatbox Toggle Icon -->
+    <!-- Thêm hidden input để lưu sessionId, giá trị sẽ được JavaScript gán -->
+    <input type="hidden" id="chat-session-id" value="">
+
+    <!-- Chatbox Toggle Icon -->
+    <div class="chatbox-icon" id="chatbox-icon">
+        <i class="fas fa-comment-dots"></i>
+    </div>
+
+    <!-- Chatbox -->
+    <div id="chatbox" class="chatbox">
+        <div class="chatbox-header">
+            <span>Trò chuyện với AI</span>
+            <button id="chatbox-close" class="chatbox-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="chatbox-body" id="chatbox-messages">
+            <!-- Messages will be appended here -->
+        </div>
+        <div class="chatbox-footer">
+            <input type="text" id="chatbox-input" placeholder="Nhập câu hỏi của bạn...">
+            <button id="chatbox-send" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+</body>
+</html>
+

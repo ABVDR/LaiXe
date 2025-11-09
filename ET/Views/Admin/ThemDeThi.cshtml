@@ -1,0 +1,964 @@
+﻿@{
+    ViewData["Title"] = "Thêm đề thi mới";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Thêm đề thi mới</h2>
+        <div>
+            <a href="@Url.Action("QuanLyDeThi", "Admin")" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Quay lại
+            </a>
+            <button type="button" class="btn btn-primary" id="btnSave">
+                <i class="fas fa-save me-1"></i> Lưu đề thi
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Thông tin cơ bản -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Thông tin cơ bản</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="tenBaiThi" class="form-label">Tên đề thi <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="tenBaiThi" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="loaiBangLaiId" class="form-label">Loại bằng lái <span class="text-danger">*</span></label>
+                        <select class="form-select" id="loaiBangLaiId" required onchange="loadChuDe()">
+                            <option value="">-- Chọn loại bằng lái --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="chuDeId" class="form-label">Lọc câu hỏi theo chủ đề</label>
+                        <select class="form-select" id="chuDeId" onchange="loadCauHoi()">
+                            <option value="">-- Tất cả chủ đề --</option>
+                        </select>
+                        <div class="form-text">Lọc danh sách câu hỏi theo chủ đề cụ thể</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Tạo đề tự động</label>
+                        <div class="d-flex">
+                            
+                            <button type="button" class="btn btn-outline-primary" onclick="taoDeTheoSoLuongChuDe()">
+                                <i class="fas fa-cog me-1"></i> Tạo đề theo cấu hình
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cấu hình câu hỏi theo chủ đề -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Cấu hình câu hỏi theo chủ đề</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="refreshTopics" onclick="loadChuDe()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="cauHinhChuDeContainer">
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Vui lòng chọn loại bằng lái để cấu hình số lượng câu hỏi theo từng chủ đề
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="tongSoCau" class="form-label">Tổng số câu hỏi tối đa</label>
+                        <input type="number" class="form-control" id="tongSoCau" value="20" min="5" max="100">
+                        <div class="form-text">Số câu hỏi tối đa cho cả đề thi</div>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="baoGomDiemLiet" checked>
+                        <label class="form-check-label" for="baoGomDiemLiet">Ưu tiên câu điểm liệt</label>
+                        <div class="form-text">Đề thi sẽ ưu tiên bao gồm các câu điểm liệt nếu có</div>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="canDoiCauHoi" checked>
+                        <label class="form-check-label" for="canDoiCauHoi">Cân đối câu hỏi</label>
+                        <div class="form-text">Tự động điều chỉnh số lượng câu hỏi từ mỗi chủ đề nếu tổng số câu vượt quá giới hạn</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách câu hỏi -->
+    <!-- Danh sách câu hỏi -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Danh sách câu hỏi (<span id="selectedCount">0</span> câu đã chọn)</h5>
+            <div>
+                <div class="input-group input-group-sm" style="width: 250px;">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm câu hỏi...">
+                    <button class="btn btn-outline-secondary" type="button" id="searchBtn" onclick="filterCauHoi()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <button class="btn btn-sm btn-primary ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#danhSachCauHoi" aria-expanded="true">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+        <div class="collapse show" id="danhSachCauHoi">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="40px">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="checkAll" onchange="toggleCheckAll(this)">
+                                    </div>
+                                </th>
+                                <th>Nội dung câu hỏi</th>
+                                <th width="120px">Chủ đề</th>
+                                <th width="60px" class="text-center">Đáp án</th>
+                                <th width="80px" class="text-center">Điểm liệt</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cauHoiTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-3">Vui lòng chọn loại bằng lái để xem câu hỏi</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination controls -->
+                <div class="d-flex justify-content-between align-items-center p-2 bg-light">
+                    <div>
+                        <small id="paginationInfo" class="text-muted">Hiển thị 0-0 của 0 câu hỏi</small>
+                    </div>
+                    <div>
+                        <button id="btnPrevPage" class="btn btn-sm btn-outline-secondary" onclick="prevPage()" disabled>
+                            <i class="fas fa-chevron-left"></i> Trước
+                        </button>
+                        <button id="btnNextPage" class="btn btn-sm btn-outline-primary ms-2" onclick="nextPage()" disabled>
+                            Tiếp <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@section Scripts {
+    <script>
+        // State variables
+        let allCauHois = [];
+        let selectedCauHois = [];
+        let allChuDes = [];
+        let cauHoiTheoChuDe = {};
+
+        // API endpoints
+        const API_ENDPOINTS = {
+            LOAI_BANG_LAI: '/api/LoaiBangLai/danh-sach',
+            CHU_DE_BY_LOAI: (loaiBangLaiId) => `/api/ChuDe/by-loai-bang-lai/${loaiBangLaiId}`,
+            CAU_HOI_BY_CHU_DE: (loaiBangLaiId, chuDeId) => `/api/BaiThi/cau-hoi?loaiBangLaiId=${loaiBangLaiId}&chuDeId=${chuDeId}`,
+            CAU_HOI_BY_LOAI: (loaiBangLaiId) => `/api/BaiThi/on-tap/${loaiBangLaiId}`,
+            TAO_DE_NGAU_NHIEN: (loaiBangLaiId) => `/api/BaiThi/de-thi-ngau-nhien/${loaiBangLaiId}`,
+            LUU_BAI_THI: '/api/BaiThi'
+        };
+
+        // HTTP client for standardized fetch requests
+        const httpClient = {
+            async get(url) {
+                try {
+                    const response = await fetch(url);
+
+                    if (!response.ok) {
+                        const text = await response.text();
+                        let errorMessage = `Error ${response.status}`;
+
+                        try {
+                            const errorObj = JSON.parse(text);
+                            errorMessage = errorObj.message || errorObj.error || errorMessage;
+                        } catch(e) {
+                            if (text) errorMessage = text;
+                        }
+
+                        throw new Error(errorMessage);
+                    }
+
+                    // Handle empty response
+                    if (response.status === 204) return [];
+
+                    const text = await response.text();
+                    if (!text || text.trim() === '') return [];
+
+                    return JSON.parse(text);
+                } catch (error) {
+                    console.error(`GET request failed for ${url}:`, error);
+                    throw error;
+                }
+            },
+
+            async post(url, data) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (!response.ok) {
+                        const text = await response.text();
+                        let errorMessage = `Error ${response.status}`;
+
+                        try {
+                            const errorObj = JSON.parse(text);
+                            errorMessage = errorObj.message || errorObj.error || errorMessage;
+                        } catch(e) {
+                            if (text) errorMessage = text;
+                        }
+
+                        throw new Error(errorMessage);
+                    }
+
+                    const result = await response.json();
+                    return result;
+                } catch (error) {
+                    console.error(`POST request failed for ${url}:`, error);
+                    throw error;
+                }
+            }
+        };
+
+        // UI utilities
+        const ui = {
+            setLoading(elementId, isLoading, loadingText = 'Đang tải...') {
+                const element = document.getElementById(elementId);
+                if (!element) return;
+
+                if (isLoading) {
+                    if (element.tagName === 'SELECT') {
+                        element.innerHTML = `<option value="">${loadingText}</option>`;
+                    } else if (element.tagName === 'BUTTON') {
+                        element._originalHtml = element.innerHTML;
+                        element.disabled = true;
+                        element.innerHTML = `<i class="fas fa-spinner fa-spin me-1"></i> ${loadingText}`;
+                    } else {
+                        element.innerHTML = `<div class="text-center py-3">${loadingText}</div>`;
+                    }
+                } else if (element.tagName === 'BUTTON' && element._originalHtml) {
+                    element.disabled = false;
+                    element.innerHTML = element._originalHtml;
+                }
+            },
+
+            showAlert(message, type = 'info') {
+                alert(message);
+            },
+
+            updateSelectedCount() {
+                document.getElementById("selectedCount").textContent = selectedCauHois.length;
+            }
+        };
+
+        // Initialize when document is ready
+        document.addEventListener("DOMContentLoaded", () => {
+            loadBangLaiVaChuDe();
+
+            // Event listeners
+            document.getElementById("searchInput").addEventListener("keyup", (e) => {
+                if (e.key === "Enter") {
+                    filterCauHoi();
+                }
+            });
+
+            document.getElementById("btnSave").addEventListener("click", saveDeThi);
+        });
+
+        // Load loại bằng lái data
+        async function loadBangLaiVaChuDe() {
+            try {
+                ui.setLoading("loaiBangLaiId", true);
+
+                const loaiBangLais = await httpClient.get(API_ENDPOINTS.LOAI_BANG_LAI);
+
+                let html = '<option value="">-- Chọn loại bằng lái --</option>';
+                loaiBangLais.forEach(loai => {
+                    html += `<option value="${loai.id}">${loai.tenLoai}</option>`;
+                });
+
+                document.getElementById("loaiBangLaiId").innerHTML = html;
+            } catch (error) {
+                console.error("Error loading loại bằng lái:", error);
+                document.getElementById("loaiBangLaiId").innerHTML =
+                    '<option value="">-- Lỗi khi tải dữ liệu --</option>';
+            }
+        }
+
+        // Load chủ đề based on selected loại bằng lái
+        async function loadChuDe() {
+            const loaiBangLaiId = document.getElementById("loaiBangLaiId").value;
+
+            if (!loaiBangLaiId) {
+                document.getElementById("cauHinhChuDeContainer").innerHTML = `
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Vui lòng chọn loại bằng lái để cấu hình số lượng câu hỏi theo từng chủ đề
+                    </div>`;
+                document.getElementById("chuDeId").innerHTML = '<option value="">-- Chọn chủ đề --</option>';
+                document.getElementById("cauHoiTableBody").innerHTML =
+                    '<tr><td colspan="5" class="text-center py-3">Vui lòng chọn loại bằng lái để xem câu hỏi</td></tr>';
+                return;
+            }
+
+            try {
+                // Show loading state
+                ui.setLoading("cauHinhChuDeContainer", true);
+                ui.setLoading("chuDeId", true);
+
+                // Reset stored questions by topic
+                cauHoiTheoChuDe = {};
+
+                const data = await httpClient.get(API_ENDPOINTS.CHU_DE_BY_LOAI(loaiBangLaiId));
+                allChuDes = data; // Store topics for later use
+
+                if (Array.isArray(data) && data.length > 0) {
+                    // Create configuration table for topics
+                    let configHtml = `
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Chủ đề</th>
+                                    <th width="120px" class="text-center">Số câu hỏi</th>
+                                    <th width="80px" class="text-center">Chọn</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                    data.forEach(chuDe => {
+                        configHtml += `
+                            <tr>
+                                <td>${chuDe.tenChuDe}</td>
+                                <td>
+                                    <input type="number" class="form-control form-control-sm chu-de-count"
+                                        id="count_${chuDe.id}" data-chude-id="${chuDe.id}"
+                                        value="3" min="0" max="20"
+                                        ${chuDe.id ? '' : 'disabled'}>
+                                </td>
+                                <td class="text-center">
+                                    <div class="form-check">
+                                        <input class="form-check-input chu-de-checkbox" type="checkbox"
+                                            id="chuDe_${chuDe.id}" value="${chuDe.id}" checked>
+                                    </div>
+                                </td>
+                            </tr>`;
+                    });
+
+                    configHtml += `
+                            </tbody>
+                        </table>
+                    </div>`;
+
+                    document.getElementById("cauHinhChuDeContainer").innerHTML = configHtml;
+
+                    // Add event listeners for checkboxes
+                    document.querySelectorAll('.chu-de-checkbox').forEach(checkbox => {
+                        checkbox.addEventListener('change', function() {
+                            const chuDeId = this.value;
+                            const countInput = document.getElementById(`count_${chuDeId}`);
+                            if (countInput) {
+                                countInput.disabled = !this.checked;
+                                countInput.value = this.checked ? "3" : "0";
+                            }
+                        });
+                    });
+
+                    // Update the filter dropdown
+                    let dropdownHtml = '<option value="">-- Tất cả chủ đề --</option>';
+                    data.forEach(chuDe => {
+                        dropdownHtml += `<option value="${chuDe.id}">${chuDe.tenChuDe}</option>`;
+                    });
+                    document.getElementById("chuDeId").innerHTML = dropdownHtml;
+                } else {
+                    document.getElementById("cauHinhChuDeContainer").innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Không tìm thấy chủ đề nào cho loại bằng lái này
+                        </div>`;
+                    document.getElementById("chuDeId").innerHTML = '<option value="">-- Không có chủ đề --</option>';
+                }
+
+                // Load questions
+                await loadCauHoi();
+            } catch (error) {
+                console.error("Error loading chủ đề:", error);
+                document.getElementById("cauHinhChuDeContainer").innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        ${error.message || "Không thể tải chủ đề. Vui lòng thử lại sau."}
+                    </div>`;
+                document.getElementById("chuDeId").innerHTML = '<option value="">-- Lỗi khi tải chủ đề --</option>';
+
+                // Try to load questions anyway
+                loadCauHoi();
+            }
+        }
+
+        // Get configuration for topics
+        function getChuDeConfig() {
+            const config = [];
+            document.querySelectorAll('.chu-de-checkbox:checked').forEach(checkbox => {
+                const chuDeId = checkbox.value;
+                const countInput = document.getElementById(`count_${chuDeId}`);
+                const count = countInput ? parseInt(countInput.value) || 0 : 0;
+
+                if (count > 0) {
+                    config.push({
+                        chuDeId: chuDeId,
+                        count: count
+                    });
+                }
+            });
+            return config;
+        }
+
+        // Load questions based on selected loại bằng lái and chủ đề
+                    // Add these variables to the beginning of your script section with other state variables
+            let currentPage = 1;
+            let pageSize = 10;
+            let filteredCauHois = [];
+
+            // Modify the loadCauHoi function to use pagination
+            async function loadCauHoi() {
+                const loaiBangLaiId = document.getElementById("loaiBangLaiId").value;
+                const chuDeId = document.getElementById("chuDeId").value;
+
+                if (!loaiBangLaiId) {
+                    document.getElementById("cauHoiTableBody").innerHTML =
+                        '<tr><td colspan="5" class="text-center py-3">Vui lòng chọn loại bằng lái để xem câu hỏi</td></tr>';
+                    document.getElementById("paginationInfo").textContent = "Hiển thị 0-0 của 0 câu hỏi";
+                    updatePaginationButtons(0);
+                    return;
+                }
+
+                try {
+                    document.getElementById("cauHoiTableBody").innerHTML =
+                        '<tr><td colspan="5" class="text-center py-3">Đang tải câu hỏi...</td></tr>';
+
+                    // Validate GUIDs
+                    const isValidGuid = id => id && id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+
+                    // Determine API URL
+                    let apiUrl;
+                    if (chuDeId && chuDeId !== "" && chuDeId !== "00000000-0000-0000-0000-000000000000" && isValidGuid(chuDeId)) {
+                        apiUrl = API_ENDPOINTS.CAU_HOI_BY_CHU_DE(loaiBangLaiId, chuDeId);
+                    } else {
+                        apiUrl = API_ENDPOINTS.CAU_HOI_BY_LOAI(loaiBangLaiId);
+                    }
+
+                    const data = await httpClient.get(apiUrl);
+
+                    // Process the response to get questions array
+                    let questions = [];
+                    if (Array.isArray(data)) {
+                        questions = data;
+                    } else if (data && data.data && Array.isArray(data.data)) {
+                        questions = data.data;
+                    } else if (data && typeof data === 'object') {
+                        // Search for array in nested object
+                        for (const key in data) {
+                            if (Array.isArray(data[key])) {
+                                questions = data[key];
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!questions || questions.length === 0) {
+                        document.getElementById("cauHoiTableBody").innerHTML =
+                            '<tr><td colspan="5" class="text-center py-3">Không tìm thấy câu hỏi nào</td></tr>';
+                        document.getElementById("paginationInfo").textContent = "Hiển thị 0-0 của 0 câu hỏi";
+                        updatePaginationButtons(0);
+                        allCauHois = [];
+                        return;
+                    }
+
+                    allCauHois = questions;
+                    filteredCauHois = allCauHois; // Reset filtered questions
+                    currentPage = 1; // Reset to first page when loading new questions
+
+                    renderCauHoiTable(getPaginatedQuestions(filteredCauHois));
+                    updatePaginationInfo(filteredCauHois);
+
+                    if (chuDeId) {
+                        cauHoiTheoChuDe[chuDeId] = questions;
+                    }
+
+                } catch (error) {
+                    console.error("Error loading questions:", error);
+                    document.getElementById("cauHoiTableBody").innerHTML =
+                        `<tr><td colspan="5" class="text-center text-danger">
+                            Lỗi khi tải câu hỏi: ${error.message}. Vui lòng thử lại!
+                        </td></tr>`;
+                    document.getElementById("paginationInfo").textContent = "Hiển thị 0-0 của 0 câu hỏi";
+                    updatePaginationButtons(0);
+                    allCauHois = [];
+                }
+            }
+
+            // Get paginated questions based on current page and page size
+            function getPaginatedQuestions(questions) {
+                if (!Array.isArray(questions) || questions.length === 0) {
+                    return [];
+                }
+
+                const startIndex = (currentPage - 1) * pageSize;
+                const endIndex = Math.min(startIndex + pageSize, questions.length);
+
+                return questions.slice(startIndex, endIndex);
+            }
+
+            // Update pagination information text
+            function updatePaginationInfo(questions) {
+                const totalQuestions = questions.length;
+                const startIndex = totalQuestions === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+                const endIndex = Math.min(currentPage * pageSize, totalQuestions);
+
+                document.getElementById("paginationInfo").textContent =
+                    `Hiển thị ${startIndex}-${endIndex} của ${totalQuestions} câu hỏi`;
+
+                updatePaginationButtons(totalQuestions);
+            }
+
+            // Update pagination button states
+            function updatePaginationButtons(totalQuestions) {
+                const totalPages = Math.ceil(totalQuestions / pageSize);
+
+                const prevButton = document.getElementById("btnPrevPage");
+                const nextButton = document.getElementById("btnNextPage");
+
+                prevButton.disabled = currentPage <= 1;
+                nextButton.disabled = currentPage >= totalPages || totalQuestions === 0;
+            }
+
+            // Navigate to previous page
+            function prevPage() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderCauHoiTable(getPaginatedQuestions(filteredCauHois));
+                    updatePaginationInfo(filteredCauHois);
+                }
+            }
+
+            // Navigate to next page
+            function nextPage() {
+                const totalPages = Math.ceil(filteredCauHois.length / pageSize);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderCauHoiTable(getPaginatedQuestions(filteredCauHois));
+                    updatePaginationInfo(filteredCauHois);
+                }
+            }
+
+            // Modify the filter function to use pagination
+            function filterCauHoi() {
+                const keyword = document.getElementById("searchInput").value.toLowerCase();
+
+                if (!keyword) {
+                    filteredCauHois = allCauHois;
+                } else {
+                    filteredCauHois = allCauHois.filter(cauHoi =>
+                        cauHoi.noiDung.toLowerCase().includes(keyword) ||
+                        (cauHoi.chuDe?.tenChuDe || '').toLowerCase().includes(keyword)
+                    );
+                }
+
+                // Reset to first page when filtering
+                currentPage = 1;
+
+                // Render the first page of filtered results
+                renderCauHoiTable(getPaginatedQuestions(filteredCauHois));
+                updatePaginationInfo(filteredCauHois);
+            }
+
+                        // Render question table
+            function renderCauHoiTable(cauHois) {
+                if (!Array.isArray(cauHois) || cauHois.length === 0) {
+                    document.getElementById("cauHoiTableBody").innerHTML =
+                        '<tr><td colspan="5" class="text-center py-3">Không tìm thấy câu hỏi nào</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                let errorCount = 0;
+
+                cauHois.forEach((cauHoi, index) => {
+                    try {
+                        // Validate question has required fields
+                        if (!cauHoi || !cauHoi.id || typeof cauHoi.noiDung !== 'string') {
+                            console.warn(`Invalid question data at index ${index}:`, cauHoi);
+                            errorCount++;
+                            return; // Skip this question
+                        }
+
+                        const isSelected = selectedCauHois.some(item => item.id === cauHoi.id);
+                        const noiDung = cauHoi.noiDung || 'Không có nội dung';
+                        const chuDeTen = cauHoi.chuDe?.tenChuDe || 'Không có chủ đề';
+                        const dapAn = cauHoi.dapAnDung || '?';
+                        const diemLiet = cauHoi.diemLiet === true;
+                        const mediaUrl = cauHoi.mediaUrl || '';
+
+                        // Truncate long question text
+                        const shortenedContent = noiDung.length > 100
+                            ? `${noiDung.substring(0, 100)}...`
+                            : noiDung;
+
+                        html += `
+                            <tr class="${isSelected ? 'table-active' : ''}">
+                                <td>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="${cauHoi.id}"
+                                            ${isSelected ? 'checked' : ''}
+                                            onchange="toggleCauHoi('${cauHoi.id}')">
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="question-content" title="${htmlEncode(noiDung)}">
+                                        ${htmlEncode(shortenedContent)}
+                                        ${mediaUrl ? '<i class="fas fa-image text-primary ms-1" title="Có hình ảnh đính kèm"></i>' : ''}
+                                    </div>
+                                </td>
+                                <td><small>${htmlEncode(chuDeTen)}</small></td>
+                                <td class="text-center"><strong>${dapAn}</strong></td>
+                                <td class="text-center">
+                                    ${diemLiet
+                                        ? '<span class="badge bg-danger">Có</span>'
+                                        : '<span class="badge bg-secondary">Không</span>'}
+                                </td>
+                            </tr>`;
+                    } catch (err) {
+                        console.error("Error rendering question:", err, cauHoi);
+                        errorCount++;
+                    }
+                });
+
+                // If all questions failed to render
+                if (errorCount === cauHois.length) {
+                    document.getElementById("cauHoiTableBody").innerHTML =
+                        '<tr><td colspan="5" class="text-center text-warning">Có lỗi khi hiển thị câu hỏi. Dữ liệu không đúng định dạng.</td></tr>';
+                    return;
+                }
+
+                document.getElementById("cauHoiTableBody").innerHTML = html ||
+                    '<tr><td colspan="5" class="text-center py-3">Không thể hiển thị câu hỏi</td></tr>';
+
+                ui.updateSelectedCount();
+            }
+
+        // Helper function to prevent XSS attacks
+        function htmlEncode(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // Filter questions based on search input
+                    function filterCauHoi() {
+                const keyword = document.getElementById("searchInput").value.toLowerCase();
+
+                if (!keyword) {
+                    filteredCauHois = allCauHois;
+                } else {
+                    filteredCauHois = allCauHois.filter(cauHoi =>
+                        cauHoi.noiDung.toLowerCase().includes(keyword) ||
+                        (cauHoi.chuDe?.tenChuDe || '').toLowerCase().includes(keyword)
+                    );
+                }
+
+                // Reset to first page when filtering
+                currentPage = 1;
+
+                // Render the first page of filtered results
+                renderCauHoiTable(getPaginatedQuestions(filteredCauHois));
+                updatePaginationInfo(filteredCauHois);
+            }
+
+        // Toggle question selection
+        function toggleCauHoi(cauHoiId) {
+            const cauHoi = allCauHois.find(item => item.id === cauHoiId);
+            if (!cauHoi) return;
+
+            const index = selectedCauHois.findIndex(item => item.id === cauHoiId);
+
+            if (index === -1) {
+                selectedCauHois.push(cauHoi);
+            } else {
+                selectedCauHois.splice(index, 1);
+            }
+
+            ui.updateSelectedCount();
+        }
+
+        // Toggle all questions
+        function toggleCheckAll(checkbox) {
+            const isChecked = checkbox.checked;
+            const checkboxes = document.querySelectorAll('#cauHoiTableBody input[type="checkbox"]');
+
+            checkboxes.forEach(cb => {
+                cb.checked = isChecked;
+                const cauHoiId = cb.value;
+                const cauHoi = allCauHois.find(item => item.id === cauHoiId);
+
+                if (isChecked) {
+                    if (!selectedCauHois.some(item => item.id === cauHoiId) && cauHoi) {
+                        selectedCauHois.push(cauHoi);
+                    }
+                } else {
+                    const index = selectedCauHois.findIndex(item => item.id === cauHoiId);
+                    if (index !== -1) {
+                        selectedCauHois.splice(index, 1);
+                    }
+                }
+            });
+
+            ui.updateSelectedCount();
+        }
+
+        // Generate random test
+        async function taoDeNgauNhien() {
+            const loaiBangLaiId = document.getElementById("loaiBangLaiId").value;
+            if (!loaiBangLaiId) {
+                ui.showAlert("Vui lòng chọn loại bằng lái trước!", "warning");
+                return;
+            }
+
+            try {
+                const btnRandom = document.querySelector("button[onclick='taoDeNgauNhien()']");
+                ui.setLoading(btnRandom.id || "btnRandom", true, "Đang tạo...");
+
+                const data = await httpClient.get(API_ENDPOINTS.TAO_DE_NGAU_NHIEN(loaiBangLaiId));
+
+                // Set default title if empty
+                if (!document.getElementById("tenBaiThi").value.trim()) {
+                    document.getElementById("tenBaiThi").value = `Đề ngẫu nhiên - ${new Date().toLocaleDateString('vi-VN')}`;
+                }
+
+                // Get selected questions
+                selectedCauHois = [];
+                data.chiTietBaiThis.forEach(chiTiet => {
+                    if (chiTiet.cauHoi) {
+                        selectedCauHois.push(chiTiet.cauHoi);
+                    }
+                });
+
+                // Update UI
+                ui.updateSelectedCount();
+                renderCauHoiTable(allCauHois);
+                ui.showAlert("Đã tạo đề thi ngẫu nhiên thành công!", "success");
+            } catch (error) {
+                console.error("Error generating random test:", error);
+                ui.showAlert(error.message || "Không thể tạo đề thi ngẫu nhiên. Vui lòng thử lại sau.", "error");
+            } finally {
+                ui.setLoading(document.querySelector("button[onclick='taoDeNgauNhien()']").id || "btnRandom", false);
+            }
+        }
+
+        // Generate test based on topic configuration
+        async function taoDeTheoSoLuongChuDe() {
+            const loaiBangLaiId = document.getElementById("loaiBangLaiId").value;
+            if (!loaiBangLaiId) {
+                ui.showAlert("Vui lòng chọn loại bằng lái trước!", "warning");
+                return;
+            }
+
+            const chuDeConfig = getChuDeConfig();
+            if (chuDeConfig.length === 0) {
+                ui.showAlert("Vui lòng chọn ít nhất một chủ đề và cấu hình số lượng câu hỏi!", "warning");
+                return;
+            }
+
+            try {
+                const btnConfig = document.querySelector("button[onclick='taoDeTheoSoLuongChuDe()']");
+                ui.setLoading(btnConfig.id || "btnConfig", true, "Đang tạo...");
+
+                const baoGomDiemLiet = document.getElementById("baoGomDiemLiet").checked;
+                const tongSoCau = parseInt(document.getElementById("tongSoCau").value) || 20;
+                const canDoiCauHoi = document.getElementById("canDoiCauHoi").checked;
+
+                // Load questions for each topic
+                const promises = chuDeConfig.map(config => {
+                    if (cauHoiTheoChuDe[config.chuDeId]) {
+                        return Promise.resolve(cauHoiTheoChuDe[config.chuDeId]);
+                    } else {
+                        return httpClient.get(API_ENDPOINTS.CAU_HOI_BY_CHU_DE(loaiBangLaiId, config.chuDeId))
+                            .then(questions => {
+                                cauHoiTheoChuDe[config.chuDeId] = questions;
+                                return questions;
+                            });
+                    }
+                });
+
+                await Promise.all(promises);
+
+                // Calculate total requested questions
+                const totalRequested = chuDeConfig.reduce((sum, config) => sum + config.count, 0);
+
+                // Store original counts for reference
+                chuDeConfig.forEach(config => config.originalCount = config.count);
+
+                // Adjust counts based on available questions
+                chuDeConfig.forEach(config => {
+                    const availableQuestions = cauHoiTheoChuDe[config.chuDeId]?.length || 0;
+                    if (availableQuestions < config.count) {
+                        config.count = availableQuestions;
+                    }
+                });
+
+                // Scale proportionally if total exceeds limit
+                let adjustedTotal = chuDeConfig.reduce((sum, config) => sum + config.count, 0);
+                if (adjustedTotal > tongSoCau && canDoiCauHoi) {
+                    const scaleFactor = tongSoCau / adjustedTotal;
+
+                    chuDeConfig.forEach(config => {
+                        config.count = Math.floor(config.count * scaleFactor);
+                        if (config.count === 0 && scaleFactor > 0) {
+                            config.count = 1; // Ensure at least 1 question per topic
+                        }
+                    });
+
+                    // Distribute remaining slots
+                    adjustedTotal = chuDeConfig.reduce((sum, config) => sum + config.count, 0);
+                    let remaining = tongSoCau - adjustedTotal;
+
+                    const sortedConfig = [...chuDeConfig].sort((a, b) => b.originalCount - a.originalCount);
+
+                    for (let i = 0; remaining > 0 && i < sortedConfig.length; i++) {
+                        const availableQuestions = cauHoiTheoChuDe[sortedConfig[i].chuDeId]?.length || 0;
+                        if (sortedConfig[i].count < availableQuestions) {
+                            sortedConfig[i].count++;
+                            remaining--;
+                        }
+                    }
+                }
+
+                // Select questions for each topic
+                let selectedQuestions = [];
+
+                chuDeConfig.forEach(config => {
+                    if (config.count <= 0) return;
+
+                    const questions = cauHoiTheoChuDe[config.chuDeId] || [];
+                    if (questions.length === 0) return;
+
+                    // Sort questions prioritizing fatal ones if requested
+                    const sortedQuestions = [...questions].sort((a, b) => {
+                        if (baoGomDiemLiet) {
+                            if (a.diemLiet && !b.diemLiet) return -1;
+                            if (!a.diemLiet && b.diemLiet) return 1;
+                        }
+                        return 0.5 - Math.random(); // Randomize
+                    });
+
+                    const topicQuestions = sortedQuestions.slice(0, config.count);
+                    selectedQuestions = [...selectedQuestions, ...topicQuestions];
+                });
+
+                if (selectedQuestions.length === 0) {
+                    throw new Error("Không tìm thấy câu hỏi nào phù hợp với cấu hình đã chọn");
+                }
+
+                // Set default title if empty
+                if (!document.getElementById("tenBaiThi").value.trim()) {
+                    const chuDeNames = chuDeConfig.map(config => {
+                        const chuDe = allChuDes.find(cd => cd.id.toString() === config.chuDeId.toString());
+                        return chuDe ? `${chuDe.tenChuDe} (${config.count})` : "Chủ đề";
+                    }).join(", ");
+
+                    document.getElementById("tenBaiThi").value = `Đề thi ${chuDeNames} - ${new Date().toLocaleDateString('vi-VN')}`;
+                }
+
+                // Update selected questions
+                selectedCauHois = selectedQuestions;
+
+                // Update UI
+                ui.updateSelectedCount();
+                renderCauHoiTable(allCauHois);
+                ui.showAlert(`Đã tạo đề thi với ${selectedQuestions.length} câu hỏi từ ${chuDeConfig.length} chủ đề thành công!`, "success");
+
+            } catch (error) {
+                console.error("Error generating test by configuration:", error);
+                ui.showAlert(error.message || "Không thể tạo đề thi. Vui lòng thử lại sau.", "error");
+            } finally {
+                ui.setLoading(document.querySelector("button[onclick='taoDeTheoSoLuongChuDe()']").id || "btnConfig", false);
+            }
+        }
+
+        // Save test
+        async function saveDeThi() {
+            const tenBaiThi = document.getElementById("tenBaiThi").value.trim();
+            if (!tenBaiThi) {
+                ui.showAlert("Vui lòng nhập tên đề thi!", "warning");
+                document.getElementById("tenBaiThi").focus();
+                return;
+            }
+
+            if (selectedCauHois.length === 0) {
+                ui.showAlert("Vui lòng chọn ít nhất một câu hỏi cho đề thi!", "warning");
+                return;
+            }
+
+            try {
+                ui.setLoading("btnSave", true, "Đang lưu...");
+
+                const data = {
+                    tenBaiThi: tenBaiThi,
+                    chiTietBaiThis: selectedCauHois.map(cauHoi => ({
+                        cauHoiId: cauHoi.id
+                    }))
+                };
+
+                const result = await httpClient.post(API_ENDPOINTS.LUU_BAI_THI, data);
+
+                ui.showAlert("Lưu đề thi thành công!", "success");
+                window.location.href = `/Admin/ChiTietDeThi/${result.id}`;
+            } catch (error) {
+                console.error("Error saving test:", error);
+                ui.showAlert(error.message || "Không thể lưu đề thi. Vui lòng thử lại sau.", "error");
+            } finally {
+                ui.setLoading("btnSave", false);
+            }
+        }
+    </script>
+}
+<style>
+    .table-sm td, .table-sm th {
+        padding: 0.4rem 0.5rem;
+    }
+
+    .question-content {
+        max-height: 3.6em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .card-header .input-group {
+        display: inline-flex;
+        vertical-align: middle;
+    }
+</style>

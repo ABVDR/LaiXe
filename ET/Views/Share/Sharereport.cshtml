@@ -1,0 +1,50 @@
+﻿<h3>@ViewData["Title"]</h3>
+<div id="reportResult"></div>
+
+<form id="reportForm">
+    <input type="hidden" id="shareId" />
+    <input type="hidden" id="replyId" />
+
+    <div class="form-group">
+        <label for="reason">Lý do báo cáo</label>
+        <textarea id="reason" class="form-control" required rows="4" placeholder="Nhập lý do cụ thể..."></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-danger mt-2">Gửi báo cáo</button>
+</form>
+
+<script>
+    // Lấy shareId và replyId từ query string
+    function getQueryParam(name) {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(name);
+    }
+    document.getElementById('shareId').value = getQueryParam('shareId') || '';
+    document.getElementById('replyId').value = getQueryParam('replyId') || '';
+
+    document.getElementById('reportForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const shareId = document.getElementById('shareId').value;
+        const replyId = document.getElementById('replyId').value;
+        const reason = document.getElementById('reason').value;
+
+        if (!shareId && !replyId) {
+            alert('Thiếu thông tin nội dung bị báo cáo!');
+            return;
+        }
+
+        const formData = new FormData();
+        if (shareId) formData.append('shareId', shareId);
+        if (replyId) formData.append('replyId', replyId);
+        formData.append('reason', reason);
+
+        const response = await fetch('/api/share/report', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        document.getElementById('reportResult').innerText = result.message || 'Đã gửi báo cáo!';
+    });
+</script>

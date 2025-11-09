@@ -1,0 +1,333 @@
+﻿@{
+    ViewData["Title"] = "Lịch Sử Thi";
+}
+
+<div class="container my-4">
+    <h2 class="mb-4">Lịch Sử Thi</h2>
+
+    <!-- Thống kê tổng quan -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">Tổng kết kết quả</h5>
+        </div>
+        <div class="card-body">
+            <div class="row" id="statistics-container">
+                <!-- JS will populate this area -->
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h4 id="totalExams">-</h4>
+                            <p class="mb-0">Tổng số bài thi</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h4 id="passedExams">-</h4>
+                            <p class="mb-0">Số bài đậu</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body text-center">
+                            <h4 id="failedExams">-</h4>
+                            <p class="mb-0">Số bài rớt</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h4 id="averageScore">-</h4>
+                            <p class="mb-0">Điểm trung bình</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Danh sách lịch sử -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Danh sách lịch sử thi</h5>
+                </div>
+                <div class="card-body">
+                    <div id="history-container">
+                        <!-- Loading indicator -->
+                        <div class="text-center" id="loading-history">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Đang tải dữ liệu...</p>
+                        </div>
+                        
+                        <!-- No data message - initially hidden -->
+                        <div class="alert alert-info d-none" id="no-history-message">
+                            Bạn chưa có lịch sử thi nào.
+                        </div>
+                        
+                        <!-- Table will be inserted here by JS -->
+                        <div class="table-responsive d-none" id="history-table-container">
+                            <table class="table table-bordered table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Ngày Thi</th>
+                                        <th>Tên Bài Thi</th>
+                                        <th>Điểm</th>
+                                        <th>Kết Quả</th>
+                                        <th>Tỉ lệ đúng</th>
+                                        <th>Chi Tiết</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-table-body">
+                                    <!-- JS will populate this area -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <nav aria-label="Phân trang" class="mt-3 d-none" id="pagination-container">
+                            <ul class="pagination justify-content-center" id="pagination">
+                                <!-- JS will populate this area -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Câu hỏi hay làm sai -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5 class="card-title mb-0">Câu hỏi hay làm sai</h5>
+                </div>
+                <div class="card-body">
+                    <div id="wrong-questions-container">
+                        <!-- Loading indicator -->
+                        <div class="text-center" id="loading-wrong-questions">
+                            <div class="spinner-border text-warning" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Đang tải dữ liệu...</p>
+                        </div>
+                        
+                        <!-- No data message - initially hidden -->
+                        <div class="alert alert-info d-none" id="no-wrong-questions-message">
+                            Chưa có dữ liệu câu hỏi hay làm sai.
+                        </div>
+                        
+                        <!-- List will be inserted here by JS -->
+                        <ul class="list-group d-none" id="wrong-questions-list">
+                            <!-- JS will populate this area -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            let currentPage = 1;
+            const pageSize = 10;
+
+            // Load all data
+            loadStatistics();
+            loadExamHistory(currentPage);
+            loadWrongQuestions();
+
+            // Load statistics data
+            function loadStatistics() {
+                $.ajax({
+                    url: '/api/lichsuthi/get-stats',
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.status && response.data) {
+                            $('#totalExams').text(response.data.tongSoBaiThi);
+                            $('#passedExams').text(response.data.soBaiThiDat);
+                            $('#failedExams').text(response.data.soBaiThiKhongDat);
+                            $('#averageScore').text(response.data.diemTrungBinh.toFixed(1));
+                        } else {
+                            console.error('Failed to load statistics');
+                        }
+                    },
+                    error: function(err) {
+                        console.error('Error loading statistics:', err);
+                    }
+                });
+            }
+
+            // Load exam history
+            function loadExamHistory(page) {
+                $('#loading-history').removeClass('d-none');
+                $('#no-history-message').addClass('d-none');
+                $('#history-table-container').addClass('d-none');
+                $('#pagination-container').addClass('d-none');
+
+                $.ajax({
+                    url: `/api/lichsuthi/get-history?pageNumber=${page}&pageSize=${pageSize}`,
+                    type: 'GET',
+                    success: function(response) {
+                        $('#loading-history').addClass('d-none');
+                        console.log('History response:', response);
+
+                        if (response.status && response.data) {
+                            const data = response.data;
+
+                            if (data.items && data.items.length > 0) {
+                                $('#history-table-container').removeClass('d-none');
+                                renderHistoryTable(data.items);
+                                renderPagination(data);
+                            } else {
+                                $('#no-history-message').removeClass('d-none');
+                            }
+                        } else {
+                            $('#no-history-message').removeClass('d-none');
+                            console.error('Failed to load exam history');
+                        }
+                    },
+                    error: function(err) {
+                        $('#loading-history').addClass('d-none');
+                        $('#no-history-message').removeClass('d-none');
+                        console.error('Error loading exam history:', err);
+                    }
+                });
+            }
+
+            // Add the missing renderHistoryTable function
+            function renderHistoryTable(items) {
+                const tableBody = $('#history-table-body');
+                tableBody.empty();
+
+                items.forEach(item => {
+                    const date = new Date(item.ngayThi);
+                    const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+
+                    const row = $(`
+                        <tr class="${item.ketQua === 'Đậu' ? 'table-success' : 'table-danger'}">
+                            <td>${formattedDate}</td>
+                            <td>${item.tenBaiThi}</td>
+                            <td>${item.diem}</td>
+                            <td>
+                                <span class="badge ${item.ketQua === 'Đậu' ? 'bg-success' : 'bg-danger'}">
+                                    ${item.ketQua}
+                                </span>
+                            </td>
+                            <td>${item.phanTramDung.toFixed(1)}%</td>
+                            <td>
+                                <a href="/LichSuThi1/Detail/${item.id}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> Xem
+                                </a>
+                            </td>
+                        </tr>
+                    `);
+
+                    tableBody.append(row);
+                });
+            }
+
+            // Add the missing renderPagination function
+            function renderPagination(data) {
+                if (data.totalCount > pageSize) {
+                    $('#pagination-container').removeClass('d-none');
+                    const pagination = $('#pagination');
+                    pagination.empty();
+
+                    // Previous button
+                    const prevDisabled = !data.hasPreviousPage;
+                    pagination.append(`
+                        <li class="page-item ${prevDisabled ? 'disabled' : ''}">
+                            <a class="page-link" href="javascript:void(0);" ${!prevDisabled ? `data-page="${data.pageNumber - 1}"` : ''}>
+                                <i class="bi bi-chevron-left"></i> Trước
+                            </a>
+                        </li>
+                    `);
+
+                    // Current page info
+                    const totalPages = Math.ceil(data.totalCount / data.pageSize);
+                    pagination.append(`
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Trang ${data.pageNumber} / ${totalPages}
+                            </span>
+                        </li>
+                    `);
+
+                    // Next button
+                    const nextDisabled = !data.hasNextPage;
+                    pagination.append(`
+                        <li class="page-item ${nextDisabled ? 'disabled' : ''}">
+                            <a class="page-link" href="javascript:void(0);" ${!nextDisabled ? `data-page="${data.pageNumber + 1}"` : ''}>
+                                Sau <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    `);
+
+                    // Attach click events to pagination links
+                    pagination.find('.page-link[data-page]').on('click', function() {
+                        currentPage = parseInt($(this).data('page'));
+                        loadExamHistory(currentPage);
+                    });
+                }
+            }
+
+            function loadWrongQuestions() {
+                $('#loading-wrong-questions').removeClass('d-none');
+                $('#no-wrong-questions-message').addClass('d-none');
+                $('#wrong-questions-list').addClass('d-none');
+
+                $.ajax({
+                    url: '/api/lichsuthi/get-wrong-questions?count=5',
+                    type: 'GET',
+                    success: function(response) {
+                        $('#loading-wrong-questions').addClass('d-none');
+
+                        if (response.status && response.data && response.data.length > 0) {
+                            $('#wrong-questions-list').removeClass('d-none');
+                            renderWrongQuestions(response.data);
+                        } else {
+                            $('#no-wrong-questions-message').removeClass('d-none');
+                        }
+                    },
+                    error: function(err) {
+                        $('#loading-wrong-questions').addClass('d-none');
+                        $('#no-wrong-questions-message').removeClass('d-none');
+                        console.error('Error loading wrong questions:', err);
+                    }
+                });
+            }
+
+            // Render wrong questions list
+            function renderWrongQuestions(items) {
+                const list = $('#wrong-questions-list');
+                list.empty();
+
+                items.forEach(item => {
+                    const question = item.cauHoi;
+                    const content = question?.noiDung || '';
+                    const shortenedContent = content.length > 50 ? content.substring(0, 50) + '...' : content;
+
+                    const listItem = $(`
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6>${shortenedContent}</h6>
+                                <small>Thuộc chủ đề: ${question?.chuDe?.tenChuDe || 'Không xác định'}</small>
+                            </div>
+                            <span class="badge bg-danger rounded-pill">${item.soLanSai} lần sai</span>
+                        </li>
+                    `);
+
+                    list.append(listItem);
+                });
+            }
+        });
+    </script>
+}

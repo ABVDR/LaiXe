@@ -1,0 +1,39 @@
+﻿@{
+    ViewData["Title"] = "Đang xử lý thanh toán...";
+    var orderId = ViewData["OrderId"] ?? "N/A";
+}
+
+<div class="container text-center" style="margin-top: 80px;">
+    <h2>⏳ Đang xử lý thanh toán...</h2>
+    <p class="text-muted">Mã đơn hàng: <strong>@orderId</strong></p>
+    <p>Hệ thống đang xác nhận giao dịch từ cổng thanh toán. Vui lòng đợi vài giây...</p>
+    <div class="spinner-border text-primary mt-4" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+
+<script>
+    // Kiểm tra quyền premium sau vài giây, nếu đã kích hoạt thì chuyển sang trang thành công
+    setTimeout(async () => {
+        try {
+            const res = await fetch('/api/lichsuthi/check-premium-access', { credentials: 'include' });
+            const data = await res.json();
+            if (data?.status && data?.hasAccess) {
+                window.location.href = '/LichSuThi1/PaymentSuccess';
+            } else {
+                // Đợi thêm 3s rồi kiểm tra lại lần nữa (tuỳ thích)
+                setTimeout(async () => {
+                    const res2 = await fetch('/api/lichsuthi/check-premium-access', { credentials: 'include' });
+                    const data2 = await res2.json();
+                    if (data2?.status && data2?.hasAccess) {
+                        window.location.href = '/LichSuThi1/PaymentSuccess';
+                    } else {
+                        window.location.href = '/LichSuThi1/PaymentFailed?error=Chưa xác nhận giao dịch';
+                    }
+                }, 3000);
+            }
+        } catch {
+            window.location.href = '/LichSuThi1/PaymentFailed?error=Lỗi kiểm tra trạng thái';
+        }
+    }, 4000);
+</script>

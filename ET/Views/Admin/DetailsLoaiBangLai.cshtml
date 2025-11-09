@@ -1,0 +1,122 @@
+﻿@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h2>Chi tiết loại bằng lái</h2>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h4>Thông tin loại bằng lái</h4>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 150px;">ID:</th>
+                            <td><span id="loaiBangLaiId"></span></td>
+                        </tr>
+                        <tr>
+                            <th>Tên loại:</th>
+                            <td><span id="tenLoai"></span></td>
+                        </tr>
+                        <tr>
+                            <th>Mô tả:</th>
+                            <td><span id="moTa"></span></td>
+                        </tr>
+                        <tr>
+                            <th>Loại xe:</th>
+                            <td><span id="loaiXe"></span></td>
+                        </tr>
+                        <tr>
+                            <th>Thời gian thi:</th>
+                            <td><span id="thoiGianThi"></span></td>
+                        </tr>
+                        <tr>
+                            <th>Điểm tối thiểu:</th>
+                            <td><span id="diemToiThieu"></span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <a href="/Admin/QLLoaiBangLai" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Quay lại
+                </a>
+                <a id="editButton" href="" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> Sửa
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function () {
+            const loaiBangLaiId = getLoaiBangLaiIdFromUrl();
+            $('#editButton').attr('href', '/Admin/EditLoaiBangLai/' + loaiBangLaiId);
+            $('#loaiBangLaiId').text(loaiBangLaiId);
+            loadLoaiBangLaiDetails(loaiBangLaiId);
+        });
+
+        function getLoaiBangLaiIdFromUrl() {
+            const url = window.location.pathname;
+            const parts = url.split('/');
+            return parts[parts.length - 1];
+        }
+
+        function loadLoaiBangLaiDetails(id) {
+            fetch(`/api/LoaiBangLai/${id}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data) {
+                    $('#tenLoai').html(formatText(data.tenLoai || ''));
+                    $('#moTa').html(formatText(data.moTa || ''));
+                    $('#loaiXe').html(formatText(data.loaiXe || ''));
+                    $('#thoiGianThi').text(data.thoiGianThi || '');
+                    $('#diemToiThieu').text(data.diemToiThieu || '');
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Không thể tải thông tin loại bằng lái'
+                    }).then(() => {
+                        window.location.href = '/Admin/QLLoaiBangLai';
+                    });
+                }
+            })
+            .catch(() => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: 'Đã xảy ra lỗi khi tải thông tin loại bằng lái'
+                }).then(() => {
+                    window.location.href = '/Admin/QLLoaiBangLai';
+                });
+            });
+        }
+
+        function formatText(text) {
+            return text ? text.replace(/\n/g, '<br>') : '';
+        }
+
+        function getToken() {
+            return localStorage.getItem('jwtToken') || '';
+        }
+    </script>
+}
