@@ -1,9 +1,11 @@
 ﻿@{
     ViewData["Title"] = "Ôn tập câu sai";
 }
-<div class="container-flex" id="questionWrapper">
-    <!-- Câu hỏi sẽ được render tại đây bằng JS -->
-</div>
+
+<!-- PayPal SDK -->
+<script src="https://www.paypal.com/sdk/js?client-id=AdeMzwtFIyD_diukUc1rbBONgLKDekGBxyS4mYkHYeOSYmAmvzp8--kw3N3m4Zmgkj07rjgs0ligQp0y&currency=USD"></script>
+
+<div class="container-flex" id="questionWrapper"></div>
 
 <style>
     :root {
@@ -48,19 +50,15 @@
         gap: 20px;
     }
 
-    .question-card {
-        transition: opacity 0.3s ease-in-out;
-    }
-
-        .question-card.d-none {
-            display: none;
-        }
-
     .question-buttons {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 8px;
         width: 100%;
+    }
+
+    .question-card.d-none {
+        display: none;
     }
 
     .question-button {
@@ -69,24 +67,17 @@
         border-radius: 6px;
         background-color: #fff;
         border: 1px solid #d1d5db;
-        transition: all 0.2s;
         cursor: pointer;
     }
-
-        .question-button:hover {
-            background-color: #f3f4f6;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
 
     .current-question {
         background: var(--primary-color);
         color: white;
-        font-weight: bold;
         border: none;
     }
 
     .btn-answered {
-        background-color: #d1fae5;
+        background: #d1fae5;
         color: #065f46;
     }
 
@@ -96,65 +87,125 @@
         margin-top: 24px;
     }
 
-    .previous-button, .next-button {
-        padding: 10px 20px;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        border: none;
-    }
-
-    .previous-button {
-        background: white;
-        color: var(--primary-solid);
-        border: 1px solid var(--primary-solid);
-    }
-
-        .previous-button:hover {
-            background-color: #e0eaff;
-        }
-
-    .next-button {
-        background: var(--primary-color);
-        color: white;
-        border: none;
-    }
-
-        .next-button:hover {
-            background: var(--primary-hover);
-        }
-
     .submit-button {
         background: var(--primary-color);
         color: white;
-        font-weight: 600;
         padding: 12px 24px;
         border-radius: 8px;
         margin-top: 20px;
-        border: none;
+        cursor: pointer;
     }
-
-        .submit-button:hover {
-            background: var(--primary-hover);
-        }
-
-    .option-item {
-        display: flex;
-        gap: 10px;
-        font-size: 14px;
-        margin-bottom: 10px;
-    }
-
-        .option-item input {
-            margin-top: 4px;
-        }
 
     img {
         max-width: 100%;
-        height: auto;
         border-radius: 6px;
         border: 1px solid #ccc;
         margin-top: 16px;
+    }
+    /////////////
+    /* Wrapper căn giữa */
+    .premium-wrapper {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 40px 0;
+    }
+
+    #questionWrapper {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* Card chính */
+    .premium-card {
+        width: 420px;
+        background: white;
+        padding: 32px;
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        text-align: center;
+        animation: fadeIn 0.3s ease;
+    }
+
+    /* Icon khoá */
+    .premium-icon {
+        width: 70px;
+        height: 70px;
+        background: #fff3cd;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto 18px auto;
+        color: #d4a106;
+        font-size: 30px;
+    }
+
+    .premium-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .premium-desc {
+        color: #555;
+        font-size: 15px;
+        margin-bottom: 25px;
+    }
+
+        .premium-desc span {
+            color: #d81b60;
+            font-weight: 700;
+        }
+
+    /* Nút momo */
+    .btn-momo {
+        background: #d81b60;
+        color: white;
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.25s;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .btn-momo:hover {
+            background: #b2154b;
+        }
+
+        .btn-momo img {
+            width: 28px;
+        }
+
+    /* Divider */
+    .divider {
+        margin: 20px 0;
+        display: flex;
+        align-items: center;
+    }
+
+        .divider span {
+            margin: 0 auto;
+            color: #888;
+            font-size: 14px;
+        }
+
+    /* PayPal */
+    .paypal-container {
+        width: 100%;
+    }
+
+  
+
     }
 </style>
 
@@ -162,136 +213,266 @@
 <script>
     let cauHoiList = [];
     let currentIndex = 0;
+    const token = localStorage.getItem("accessToken");
 
+    // ================================
+    // 1. Load trang
+    // ================================
     window.onload = async function () {
-        const token = localStorage.getItem("jwtToken");
+
         const response = await fetch("/api/lichsuthi/luyen-lai-cau-sai", {
-            headers: {
-                "Authorization": "Bearer " + token
-            }
+            headers: { "Authorization": "Bearer " + token }
         });
 
         const data = await response.json();
-        if (data.status && data.data.length > 0) {
-            cauHoiList = data.data;
-            renderQuestions();
-            showQuestion(0);
-        } else {
-            document.getElementById("questionWrapper").innerHTML = "<p>Không có câu hỏi sai để ôn tập.</p>";
+
+        // Chưa mở khóa
+        if (!data.status && data.requiresPayment) {
+
+               document.getElementById("questionWrapper").innerHTML = `
+        <div class="premium-wrapper">
+
+            <div class="premium-card">
+                <div class="premium-icon">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+
+                <h2 class="premium-title">Mở khóa tính năng nâng cao</h2>
+                <p class="premium-desc">
+                    Chỉ với <span>25.000 VNĐ</span> bạn có thể luyện lại toàn bộ câu sai
+                    và cải thiện kết quả thi của mình.
+                </p>
+
+                <div class="payment-section">
+
+                    <button class="btn-momo" onclick="thanhToanMoKhoa(1)">
+                        <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png">
+                        Thanh toán qua MoMo
+                    </button>
+
+                    <div class="divider">
+                        <span>Hoặc</span>
+                    </div>
+
+                    <div id="paypal-button-container" class="paypal-container"></div>
+
+                </div>
+            </div>
+
+        </div>
+    `;
+
+            renderPayPalButton();
+            return;
         }
+
+        if (!data.status || data.data.length === 0) {
+            document.getElementById("questionWrapper").innerHTML =
+                "<p>Không có câu hỏi sai để ôn tập.</p>";
+            return;
+        }
+
+        cauHoiList = data.data;
+        renderQuestions();
+        showQuestion(0);
     };
 
+
+    // ================================
+    // 2. Thanh toán MoMo (giữ nguyên)
+    // ================================
+    async function thanhToanMoKhoa(method) {
+        const response = await fetch("/api/lichsuthi/create-payment-session", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({ method })
+        });
+
+        const data = await response.json();
+
+        if (!data.status) return alert(data.message);
+        window.location.href = data.redirectUrl;
+    }
+          function renderPayPalButton() {
+
+        paypal.Buttons({
+
+            // 1️⃣ Tạo order PayPal
+            createOrder: async function () {
+
+                // Tạo Order nội bộ
+                const session = await fetch("/api/lichsuthi/create-payment-session", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + token,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ method: 2 }) // 2 = PayPal
+                }).then(r => r.json());
+
+                window.orderId = session.orderId;
+
+                // Gọi PayPalController để tạo PayPal Order
+                const response = await fetch("/api/paypal/create-order", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + token,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        orderId: window.orderId
+                    })
+                });
+
+                const data = await response.json();
+
+                window.payPalOrderId = data.payPalOrderId;
+                return data.payPalOrderId;   // Trả id cho PayPal
+            },
+
+            // 2️⃣ Khi user bấm thanh toán
+            onApprove: async function () {
+
+                const response = await fetch("/api/paypal/capture-order", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + token,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        orderId: window.orderId,
+                        payPalOrderId: window.payPalOrderId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.status)
+                    window.location.href = "/LichSuThi1/PaymentSuccess";
+                else
+                    window.location.href = "/LichSuThi1/PaymentFailed";
+            }
+
+        }).render('#paypal-button-container');
+    }
+
+
+
+
+    // ================================
+    // 3. PayPal SMART BUTTON (Cách 2)
+    // ================================
+  
+
+    // ================================
+    // 4. Render câu hỏi
+    // ================================
     function renderQuestions() {
         const wrapper = document.getElementById("questionWrapper");
+
         let html = `<div class="question-container">`;
 
         cauHoiList.forEach((q, i) => {
             html += `
-            <div class="question-card ${i === 0 ? "" : "d-none"}" data-index="${i}" data-id="${q.id}">
-                ${q.diemLiet ? '<span class="badge bg-danger mb-2">Điểm liệt</span>' : ''}
-                <h5 class="fw-semibold">${q.noiDung}</h5>
-                ${q.mediaUrl ? `<div class="text-center"><img src="${q.mediaUrl}" /></div>` : ''}
-                <div class="mt-3">
-                    ${renderOption(q, 'A', i)}
-                    ${renderOption(q, 'B', i)}
-                    ${q.luaChonC ? renderOption(q, 'C', i) : ''}
-                    ${q.luaChonD ? renderOption(q, 'D', i) : ''}
+                <div class="question-card ${i === 0 ? "" : "d-none"}" data-index="${i}">
+                    <h5>${q.noiDung}</h5>
+                    ${q.mediaUrl ? `<img src="${q.mediaUrl}" />` : ""}
+                    <div>
+                        ${renderOption(q,'A',i)}
+                        ${renderOption(q,'B',i)}
+                        ${q.luaChonC ? renderOption(q,'C',i) : ""}
+                        ${q.luaChonD ? renderOption(q,'D',i) : ""}
+                    </div>
                 </div>
-            </div>`;
+            `;
         });
 
         html += `
-        <div class="navigation-buttons">
-            <button type="button" id="prev-question" class="previous-button" onclick="previousQuestion()">← Câu trước</button>
-            <button type="button" id="next-question" class="next-button" onclick="nextQuestion()">Câu tiếp →</button>
-        </div></div>
+            <div class="navigation-buttons">
+                <button onclick="previousQuestion()">← Câu trước</button>
+                <button onclick="nextQuestion()">Câu tiếp →</button>
+            </div>
+        </div>
+
         <div class="side-panel">
             <div class="question-buttons">`;
 
         for (let i = 0; i < cauHoiList.length; i++) {
-            html += `<button id="btn-question-${i}" class="question-button" type="button" onclick="showQuestion(${i})">${i + 1}</button>`;
+            html += `<button id="btn-question-${i}" class="question-button"
+                            onclick="showQuestion(${i})">${i + 1}</button>`;
         }
 
         html += `
             </div>
-            <button type="button" onclick="submitAnswers()" class="submit-button">Nộp bài</button>
+            <button class="submit-button" onclick="submitAnswers()">Nộp bài</button>
         </div>`;
 
         wrapper.innerHTML = html;
     }
 
+
     function renderOption(q, key, index) {
         return `
-        <label class="option-item">
-            <input type="radio" name="cauHoi_${q.id}" value="${key}" onchange="markAnswered(${index})" />
-            ${key}. ${q["luaChon" + key]}
-        </label>`;
+            <label class="option-item">
+                <input type="radio" name="cauHoi_${q.id}" value="${key}"
+                       onchange="markAnswered(${index})">
+                ${key}. ${q["luaChon" + key]}
+            </label>
+        `;
     }
 
-    function showQuestion(index) {
-        document.querySelectorAll('.question-card').forEach((card, i) => {
-            card.classList.toggle('d-none', i !== index);
-        });
+    function showQuestion(i) {
+        document.querySelectorAll(".question-card")
+            .forEach((c, idx) => c.classList.toggle("d-none", idx !== i));
 
-        currentIndex = index;
-        document.getElementById('prev-question').disabled = currentIndex === 0;
-        document.getElementById('next-question').disabled = currentIndex === cauHoiList.length - 1;
+        currentIndex = i;
 
-        document.querySelectorAll('.question-button').forEach(btn => {
-            btn.classList.remove('current-question');
-        });
+        document.querySelectorAll(".question-button")
+            .forEach(btn => btn.classList.remove("current-question"));
 
-        const currentBtn = document.getElementById('btn-question-' + index);
-        if (currentBtn) currentBtn.classList.add('current-question');
+        document.getElementById("btn-question-" + i)
+            .classList.add("current-question");
     }
 
-    function previousQuestion() {
-        if (currentIndex > 0) showQuestion(currentIndex - 1);
+    function previousQuestion() { if (currentIndex > 0) showQuestion(currentIndex - 1); }
+    function nextQuestion() { if (currentIndex < cauHoiList.length - 1) showQuestion(currentIndex + 1); }
+
+    function markAnswered(i) {
+        document.getElementById("btn-question-" + i)
+            .classList.add("btn-answered");
     }
 
-    function nextQuestion() {
-        if (currentIndex < cauHoiList.length - 1) showQuestion(currentIndex + 1);
-    }
-
-    function markAnswered(index) {
-        const btn = document.getElementById('btn-question-' + index);
-        if (btn) btn.classList.add('btn-answered');
-    }
-
-        async function submitAnswers() {
+    // ================================
+    // 5. Submit bài làm
+    // ================================
+    async function submitAnswers() {
         const answers = {};
         cauHoiList.forEach(q => {
-            const options = document.getElementsByName("cauHoi_" + q.id);
-            let selected = null;
-            for (const opt of options) {
-                if (opt.checked) {
-                    selected = opt.value;
-                    break;
-                }
-            }
-            answers[q.id] = selected;
+            const opts = document.getElementsByName("cauHoi_" + q.id);
+            for (const o of opts)
+                if (o.checked) answers[q.id] = o.value;
         });
 
-    const token = localStorage.getItem("jwtToken");
+        const res = await fetch("/api/lichsuthi/luu-ket-qua-luyen-lai", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({ cauHoiAnswers: answers })
+        });
 
-    const response = await fetch("/api/lichsuthi/luu-ket-qua-luyen-lai", {
-        method: "POST",
-        headers: {
-            "Authorization": "Bearer " + token,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ cauHoiAnswers: answers })
-    });
+        const data = await res.json();
 
-    const data = await response.json();
-
-    if (data.status) {
-        localStorage.setItem("ketQuaLuyenLai", JSON.stringify(data.data));
+        if (data.status) {
+            localStorage.setItem("ketQuaLuyenLai", JSON.stringify(data.data));
             window.location.href = "KetQuaLuyLai";
-    } else {
-        alert("❌ " + data.message);
+        } else {
+            alert("❌ " + data.message);
+        }
     }
-}
-
 
 </script>
