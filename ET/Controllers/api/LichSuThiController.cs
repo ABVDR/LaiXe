@@ -304,31 +304,39 @@ namespace ET.Controllers.api
         [HttpPost("create-payment-session")]
         public async Task<IActionResult> CreatePaymentSession([FromBody] CreatePaymentSessionDto dto, CancellationToken ct)
         {
-            try
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { status = false, message = "Không tìm thấy người dùng" });
+
+            // 1️⃣ Nếu user chọn PayPal → chỉ tạo order → KHÔNG redirect
+            if (dto.Method == PaymentMethod.PayPal)
             {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (string.IsNullOrEmpty(userId))
-                    return Unauthorized(new { status = false, message = "Không tìm thấy người dùng" });
-
-                var hasAccess = await _tinhNangSvc.KiemTraQuyenAsync(userId, "LuyenCauSai", ct);
-                if (hasAccess)
-                    return BadRequest(new { status = false, message = "Bạn đã mở khóa tính năng này rồi" });
-
                 var orderId = await _tinhNangSvc.TaoDonHangChoTinhNangAsync(userId, "LuyenCauSai", 25000, ct);
-                var returnUrl = $"{Request.Scheme}://{Request.Host}/api/lichsuthi/payment-return?orderId={orderId}";
 
-                var result = await _paymentSvc.TaoThanhToanAsync(new(orderId, dto.Method, returnUrl), ct);
-                if (!result.Ok)
-                    return BadRequest(new { status = false, message = result.Error });
+                return Ok(new
+                {
+                    status = true,
+                    orderId,
+                    redirectUrl = ""  // FE PayPal Smart Button lo
+                });
+            }
 
-                return Ok(new { status = true, orderId, result.RedirectUrl });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi tạo phiên thanh toán");
-                return StatusCode(500, new { status = false, message = "Lỗi khi tạo phiên thanh toán: " + ex.Message });
-            }
+            // 2️⃣ Momo: giữ nguyên code cũ
+            var hasAccess = await _tinhNangSvc.KiemTraQuyenAsync(userId, "LuyenCauSai", ct);
+            if (hasAccess)
+                return BadRequest(new { status = false, message = "Bạn đã mở khóa tính năng này rồi" });
+
+            var orderIdMomo = await _tinhNangSvc.TaoDonHangChoTinhNangAsync(userId, "LuyenCauSai", 25000, ct);
+            var returnUrl = $"{Request.Scheme}://{Request.Host}/api/lichsuthi/payment-return?orderId={orderIdMomo}";
+
+            var result = await _paymentSvc.TaoThanhToanAsync(new(orderIdMomo, dto.Method, returnUrl), ct);
+
+            if (!result.Ok)
+                return BadRequest(new { status = false, message = result.Error });
+
+            return Ok(new { status = true, orderId = orderIdMomo, result.RedirectUrl });
         }
+
         // Return URL sau khi cổng thanh toán redirect về
         [HttpGet("payment-return")]
         [AllowAnonymous]
@@ -371,5 +379,9 @@ namespace ET.Controllers.api
         {
             public PaymentMethod Method { get; set; } // 1 = MoMo, 2 = PayPal
         }
+
+
     }
+
+
 }

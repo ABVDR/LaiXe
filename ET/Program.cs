@@ -89,6 +89,7 @@ builder.Services.AddScoped<IGiaoDichThanhToanRepository, GiaoDichThanhToanReposi
 builder.Services.AddScoped<ITinhNangMoKhoaRepository, TinhNangMoKhoaRepository>();
 builder.Services.AddScoped<ITinhNangService, TinhNangService>();
 
+builder.Services.AddHttpClient();
 
 
 //
@@ -127,6 +128,10 @@ builder.Services.AddHangfire(configuration => configuration
             DisableGlobalLocks = true
         }));
 builder.Services.AddHangfireServer();
+
+//
+
+//
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
