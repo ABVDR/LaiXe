@@ -1,0 +1,107 @@
+﻿@{
+    ViewData["Title"] = "Chi tiết Giao dịch";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2>Chi tiết Giao dịch</h2>
+
+<table class="table table-bordered table-striped" id="transaction-detail">
+    <tbody>
+        <tr>
+            <th>Mã giao dịch</th>
+            <td id="gd-id"></td>
+        </tr>
+        <tr>
+            <th>Mã đơn hàng</th>
+            <td id="gd-order"></td>
+        </tr>
+        <tr>
+            <th>Số tiền</th>
+            <td id="gd-amount"></td>
+        </tr>
+        <tr>
+            <th>Cổng thanh toán</th>
+            <td id="gd-gateway"></td>
+        </tr>
+        <tr>
+            <th>Trạng thái</th>
+            <td id="gd-status"></td>
+        </tr>
+        <tr>
+            <th>Ngày tạo</th>
+            <td id="gd-created"></td>
+        </tr>
+        <tr>
+            <th>Ngày cập nhật</th>
+            <td id="gd-updated"></td>
+        </tr>
+        <tr>
+            <th>User ID</th>
+            <td id="gd-user"></td>
+        </tr>
+        <tr>
+            <th>Ghi chú</th>
+            <td id="gd-note"></td>
+        </tr>
+    </tbody>
+</table>
+
+<a href="/Admin/DoanhThu" class="btn btn-secondary">← Quay lại danh sách</a>
+
+<script>
+    document.addEventListener('DOMContentLoaded', loadDetail);
+
+    async function loadDetail() {
+        const id = @Model;
+
+        const response = await fetch(`/api/doanh-thu/chi-tiet/${id}`, {
+            headers: { "Accept": "application/json" }
+        });
+
+        if (!response.ok) {
+            alert("Không thể tải dữ liệu!");
+            return;
+        }
+
+        const json = await response.json();
+
+        if (!json.status) {
+            alert("Không tìm thấy giao dịch!");
+            return;
+        }
+
+        const d = json.data;
+
+        // --- Map dữ liệu chính xác theo JSON API ---
+        document.getElementById("gd-id").innerText = d.id ?? "";
+        document.getElementById("gd-order").innerText = d.donHangId ?? "";
+
+        // API không có số tiền → tạm lấy maDonCong nếu cần
+        document.getElementById("gd-amount").innerText = d.maDonCong ?? "";
+
+        document.getElementById("gd-gateway").innerText = d.congThanhToan ?? "";
+        document.getElementById("gd-status").innerText = convertStatus(d.trangThai);
+        document.getElementById("gd-created").innerText = formatDate(d.ngayTao);
+        document.getElementById("gd-updated").innerText = formatDate(d.ngayCapNhat);
+
+        // API không trả userId → để trống
+        document.getElementById("gd-user").innerText = d.userId ?? "";
+
+        // Ghi chú từ API = thongBaoLoi
+        document.getElementById("gd-note").innerText = d.thongBaoLoi ?? "";
+    }
+
+    function convertStatus(status) {
+        switch (status) {
+            case 0: return "Chờ xử lý";
+            case 1: return "Thành công";
+            case 2: return "Thất bại";
+            default: return "Không xác định";
+        }
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return "";
+        return new Date(dateString).toLocaleString("vi-VN");
+    }
+</script>

@@ -3,28 +3,42 @@
     var orderId = ViewData["OrderId"] ?? "N/A";
 }
 
-<div class="container text-center" style="margin-top: 80px;">
-    <h2>⏳ Đang xử lý thanh toán...</h2>
-    <p class="text-muted">Mã đơn hàng: <strong>@orderId</strong></p>
-    <p>Hệ thống đang xác nhận giao dịch từ cổng thanh toán. Vui lòng đợi vài giây...</p>
-    <div class="spinner-border text-primary mt-4" role="status">
-        <span class="visually-hidden">Loading...</span>
+<div class="container" style="max-width: 600px; margin-top: 110px; text-align:center;">
+    <h2 style="font-weight:600; font-size:28px; color:#1d1d1f; letter-spacing:-0.5px;">
+        Đang xử lý thanh toán
+    </h2>
+
+    <p style="margin-top: 12px; font-size:15px; color:#6e6e73;">
+        Mã đơn hàng: <strong style="color:#1d1d1f;">@orderId</strong>
+    </p>
+
+    <p style="margin-top: 4px; font-size:15px; color:#6e6e73;">
+        Hệ thống đang xác nhận giao dịch. Vui lòng chờ trong giây lát.
+    </p>
+
+    <div style="margin-top: 36px;">
+        <div class="spinner-border" role="status"
+             style="width: 2.5rem; height: 2.5rem; color:#0071e3;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
     </div>
 </div>
 
 <script>
-    // Kiểm tra quyền premium sau vài giây, nếu đã kích hoạt thì chuyển sang trang thành công
+    // Kiểm tra trạng thái sau 4 giây
     setTimeout(async () => {
         try {
             const res = await fetch('/api/lichsuthi/check-premium-access', { credentials: 'include' });
             const data = await res.json();
+
             if (data?.status && data?.hasAccess) {
                 window.location.href = '/LichSuThi1/PaymentSuccess';
             } else {
-                // Đợi thêm 3s rồi kiểm tra lại lần nữa (tuỳ thích)
+                // Kiểm tra lại sau 3 giây
                 setTimeout(async () => {
                     const res2 = await fetch('/api/lichsuthi/check-premium-access', { credentials: 'include' });
                     const data2 = await res2.json();
+
                     if (data2?.status && data2?.hasAccess) {
                         window.location.href = '/LichSuThi1/PaymentSuccess';
                     } else {
@@ -32,6 +46,7 @@
                     }
                 }, 3000);
             }
+
         } catch {
             window.location.href = '/LichSuThi1/PaymentFailed?error=Lỗi kiểm tra trạng thái';
         }

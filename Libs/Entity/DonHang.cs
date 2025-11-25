@@ -17,5 +17,12 @@ namespace Libs.Entity
 
         // Dùng UTC nhất quán
         public DateTimeOffset NgayTao { get; set; } = DateTimeOffset.UtcNow;
+
+        public string? UserId { get; set; }
+
+
+
+
+
     }
 }

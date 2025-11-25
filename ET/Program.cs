@@ -1,4 +1,4 @@
-using ET.Extensions;
+﻿using ET.Extensions;
 using ET.Services;
 using Hangfire;
 using Libs;
@@ -81,13 +81,15 @@ builder.Services.Configure<PayPalTuyChon>(builder.Configuration.GetSection("PayP
 
 // gateways + service
 builder.Services.AddScoped<CongMoMo>();
-builder.Services.AddScoped<CongPayPal>();
 builder.Services.AddScoped<ICongThanhToanFactory, CongThanhToanFactory>();
 builder.Services.AddScoped<IThanhToanService, ThanhToanService>();
 builder.Services.AddScoped<IDonHangRepository, DonHangRepository>();
 builder.Services.AddScoped<IGiaoDichThanhToanRepository, GiaoDichThanhToanRepository>();
 builder.Services.AddScoped<ITinhNangMoKhoaRepository, TinhNangMoKhoaRepository>();
 builder.Services.AddScoped<ITinhNangService, TinhNangService>();
+
+builder.Services.AddScoped<IDoanhThuRepository, DoanhThuRepository>();
+builder.Services.AddScoped<DoanhThuService>();
 
 builder.Services.AddHttpClient();
 
@@ -138,6 +140,11 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("UserPolicy", policy => policy.RequireRole("User"));
 });
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();   // <--- BẮT BUỘC PHẢI CÓ
+}
 
 app.ApplyMigrations();
 // Configure the HTTP request pipeline.

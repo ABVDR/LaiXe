@@ -1,4 +1,5 @@
-﻿using Libs.Entity;
+﻿using Libs.Data;
+using Libs.Entity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,14 @@ using System.Threading.Tasks;
 
 namespace Libs.Repositories
 {
+    public interface IGiaoDichThanhToanRepository
+    {
+        Task<GiaoDichThanhToan> CreatePendingAsync(long donHangId, string cong, string? maDonCong, CancellationToken ct);
+        Task AttachGatewayAsync(long donHangId, string cong, string requestId, string maDonCong, CancellationToken ct = default);
+        Task MarkPaidAsync(long donHangId, string cong, string maGiaoDichCuoi, CancellationToken ct);
+        Task MarkFailedAsync(long donHangId, string cong, string lyDo, CancellationToken ct);
+        Task<GiaoDichThanhToan?> GetByOrderAsync(long donHangId, string cong, CancellationToken ct);
+    }
     public sealed class GiaoDichThanhToanRepository : IGiaoDichThanhToanRepository
     {
         private readonly ApplicationDbContext _db;

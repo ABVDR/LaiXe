@@ -8,11 +8,509 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Libs.Migrations
 {
     /// <inheritdoc />
-    public partial class update : Migration
+    public partial class themdonhang : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "AspNetRoles",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetRoles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUsers",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    LockoutEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    AccessFailedCount = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BaiThis",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenBaiThi = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BaiThis", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChuDes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenChuDe = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MoTa = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    isDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChuDes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DonHangs",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TongTien = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    TrangThai = table.Column<int>(type: "int", nullable: false),
+                    NgayTao = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DonHangs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "GiaoDichThanhToans",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DonHangId = table.Column<long>(type: "bigint", nullable: false),
+                    CongThanhToan = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: false),
+                    MaDonCong = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    MaGiaoDichCuoi = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    TrangThai = table.Column<int>(type: "int", nullable: false),
+                    ThongBaoLoi = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true),
+                    NgayTao = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    NgayCapNhat = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GiaoDichThanhToans", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LichSuThis",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BaiThiId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenBaiThi = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    NgayThi = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TongSoCau = table.Column<int>(type: "int", nullable: false),
+                    SoCauDung = table.Column<int>(type: "int", nullable: false),
+                    PhanTramDung = table.Column<double>(type: "float", nullable: false),
+                    Diem = table.Column<int>(type: "int", nullable: false),
+                    KetQua = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MacLoiNghiemTrong = table.Column<bool>(type: "bit", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LichSuThis", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LoaiBangLais",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenLoai = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MoTa = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LoaiXe = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ThoiGianThi = table.Column<int>(type: "int", nullable: false),
+                    DiemToiThieu = table.Column<int>(type: "int", nullable: false),
+                    isDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LoaiBangLais", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Shares",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Topic = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Shares", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TinhNangMoKhoas",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    TenTinhNang = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
+                    DangHoatDong = table.Column<bool>(type: "bit", nullable: false),
+                    KichHoatLuc = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    HetHanLuc = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DonHangId = table.Column<long>(type: "bigint", nullable: true),
+                    SoTienDaTra = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    NgayTao = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "GETUTCDATE()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TinhNangMoKhoas", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "VisitLogs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    VisitTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    VisitorId = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VisitLogs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetRoleClaims",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetRoleClaims", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AspNetRoleClaims_AspNetRoles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "AspNetRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserClaims",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserClaims", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AspNetUserClaims_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserLogins",
+                columns: table => new
+                {
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserLogins", x => new { x.LoginProvider, x.ProviderKey });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserLogins_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserRoles",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserRoles", x => new { x.UserId, x.RoleId });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserRoles_AspNetRoles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "AspNetRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AspNetUserRoles_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserTokens",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserTokens", x => new { x.UserId, x.LoginProvider, x.Name });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserTokens_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BaiSaHinhs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    isDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    TenBai = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Order = table.Column<int>(type: "int", nullable: false),
+                    NoiDung = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LoaiBangLaiId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BaiSaHinhs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BaiSaHinhs_LoaiBangLais_LoaiBangLaiId",
+                        column: x => x.LoaiBangLaiId,
+                        principalTable: "LoaiBangLais",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CauHois",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    NoiDung = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LuaChonA = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LuaChonB = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LuaChonC = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LuaChonD = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DapAnDung = table.Column<string>(type: "nvarchar(1)", nullable: false),
+                    GiaiThich = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DiemLiet = table.Column<bool>(type: "bit", nullable: false),
+                    MediaUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LoaiMedia = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    MeoGhiNho = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    isDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    ChuDeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LoaiBangLaiId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CauHois", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CauHois_ChuDes_ChuDeId",
+                        column: x => x.ChuDeId,
+                        principalTable: "ChuDes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CauHois_LoaiBangLais_LoaiBangLaiId",
+                        column: x => x.LoaiBangLaiId,
+                        principalTable: "LoaiBangLais",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MoPhongs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    NoiDung = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    VideoUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DapAn = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LoaiBangLaiId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MoPhongs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MoPhongs_LoaiBangLais_LoaiBangLaiId",
+                        column: x => x.LoaiBangLaiId,
+                        principalTable: "LoaiBangLais",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ShareReplies",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ShareId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ParentReplyId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ShareReplies", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_ShareReplies_Shares_ShareId",
+                        column: x => x.ShareId,
+                        principalTable: "Shares",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CauHoiSais",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CauHoiId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    NgaySai = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CauHoiSais", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CauHoiSais_CauHois_CauHoiId",
+                        column: x => x.CauHoiId,
+                        principalTable: "CauHois",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChiTietBaiThis",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BaiThiId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CauHoiId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChiTietBaiThis", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ChiTietBaiThis_BaiThis_BaiThiId",
+                        column: x => x.BaiThiId,
+                        principalTable: "BaiThis",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ChiTietBaiThis_CauHois_CauHoiId",
+                        column: x => x.CauHoiId,
+                        principalTable: "CauHois",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChiTietLichSuThis",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LichSuThiId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CauHoiId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CauTraLoi = table.Column<string>(type: "nvarchar(1)", nullable: true),
+                    DungSai = table.Column<bool>(type: "bit", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChiTietLichSuThis", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ChiTietLichSuThis_CauHois_CauHoiId",
+                        column: x => x.CauHoiId,
+                        principalTable: "CauHois",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ChiTietLichSuThis_LichSuThis_LichSuThiId",
+                        column: x => x.LichSuThiId,
+                        principalTable: "LichSuThis",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ShareReports",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ShareId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ShareReplyId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ShareReports", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ShareReports_ShareReplies_ShareReplyId",
+                        column: x => x.ShareReplyId,
+                        principalTable: "ShareReplies",
+                        principalColumn: "id");
+                    table.ForeignKey(
+                        name: "FK_ShareReports_Shares_ShareId",
+                        column: x => x.ShareId,
+                        principalTable: "Shares",
+                        principalColumn: "Id");
+                });
+
             migrationBuilder.InsertData(
                 table: "AspNetRoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
@@ -237,835 +735,203 @@ namespace Libs.Migrations
                     { new Guid("e10a6435-7b18-48d5-b7a4-c2e4cf84c8a3"), new Guid("beb046b2-7109-481f-9e9e-5c2804c178a0"), new Guid("459f6775-e179-4288-9c2d-1d725cf3b6d8") },
                     { new Guid("fdb59178-9329-48a3-badd-a3c2d8b84eab"), new Guid("beb046b2-7109-481f-9e9e-5c2804c178a0"), new Guid("160cfe60-432a-48d8-b501-4d288bfe2d5a") }
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetRoleClaims_RoleId",
+                table: "AspNetRoleClaims",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "RoleNameIndex",
+                table: "AspNetRoles",
+                column: "NormalizedName",
+                unique: true,
+                filter: "[NormalizedName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUserClaims_UserId",
+                table: "AspNetUserClaims",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUserLogins_UserId",
+                table: "AspNetUserLogins",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUserRoles_RoleId",
+                table: "AspNetUserRoles",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "EmailIndex",
+                table: "AspNetUsers",
+                column: "NormalizedEmail");
+
+            migrationBuilder.CreateIndex(
+                name: "UserNameIndex",
+                table: "AspNetUsers",
+                column: "NormalizedUserName",
+                unique: true,
+                filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BaiSaHinhs_LoaiBangLaiId",
+                table: "BaiSaHinhs",
+                column: "LoaiBangLaiId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CauHois_ChuDeId",
+                table: "CauHois",
+                column: "ChuDeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CauHois_LoaiBangLaiId",
+                table: "CauHois",
+                column: "LoaiBangLaiId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CauHoiSais_CauHoiId",
+                table: "CauHoiSais",
+                column: "CauHoiId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChiTietBaiThis_BaiThiId",
+                table: "ChiTietBaiThis",
+                column: "BaiThiId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChiTietBaiThis_CauHoiId",
+                table: "ChiTietBaiThis",
+                column: "CauHoiId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChiTietLichSuThis_CauHoiId",
+                table: "ChiTietLichSuThis",
+                column: "CauHoiId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChiTietLichSuThis_LichSuThiId",
+                table: "ChiTietLichSuThis",
+                column: "LichSuThiId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GiaoDichThanhToans_MaDonCong",
+                table: "GiaoDichThanhToans",
+                column: "MaDonCong");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GiaoDichThanhToans_MaGiaoDichCuoi",
+                table: "GiaoDichThanhToans",
+                column: "MaGiaoDichCuoi",
+                unique: true,
+                filter: "[MaGiaoDichCuoi] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GiaoDichThanhToans_TrangThai_NgayTao",
+                table: "GiaoDichThanhToans",
+                columns: new[] { "TrangThai", "NgayTao" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MoPhongs_LoaiBangLaiId",
+                table: "MoPhongs",
+                column: "LoaiBangLaiId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ShareReplies_ShareId",
+                table: "ShareReplies",
+                column: "ShareId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ShareReports_ShareId",
+                table: "ShareReports",
+                column: "ShareId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ShareReports_ShareReplyId",
+                table: "ShareReports",
+                column: "ShareReplyId");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_User_TinhNang_Active",
+                table: "TinhNangMoKhoas",
+                columns: new[] { "UserId", "TenTinhNang", "DangHoatDong" });
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DeleteData(
-                table: "AspNetUserRoles",
-                keyColumns: new[] { "RoleId", "UserId" },
-                keyValues: new object[] { "05f2400b-5471-466a-8b7e-27752367e4d6", "8d581a98-361e-4333-a651-74e88ef572a4" });
+            migrationBuilder.DropTable(
+                name: "AspNetRoleClaims");
 
-            migrationBuilder.DeleteData(
-                table: "AspNetUserRoles",
-                keyColumns: new[] { "RoleId", "UserId" },
-                keyValues: new object[] { "10f2400b-5471-466a-8b7e-27752367e4d6", "9ae1058d-b602-4025-ab1d-74e7bced8f3b" });
+            migrationBuilder.DropTable(
+                name: "AspNetUserClaims");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("018d8cd1-13cc-42f9-a8e6-1c745ce6db87"));
+            migrationBuilder.DropTable(
+                name: "AspNetUserLogins");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("0c7fc479-bfa1-4f32-99c0-250934199496"));
+            migrationBuilder.DropTable(
+                name: "AspNetUserRoles");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("0d63c479-795a-417f-8c79-7fcbd15f9ae9"));
+            migrationBuilder.DropTable(
+                name: "AspNetUserTokens");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("0e29fb07-bc96-41de-be34-3a5ac5adbcb6"));
+            migrationBuilder.DropTable(
+                name: "BaiSaHinhs");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("1395eeb5-dcaf-47fa-b4b9-46197875e73f"));
+            migrationBuilder.DropTable(
+                name: "CauHoiSais");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("1616459f-d0ba-4f82-a028-f52f596e6cdb"));
+            migrationBuilder.DropTable(
+                name: "ChiTietBaiThis");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("17df60b3-08c7-4804-97b1-13f6c07725a7"));
+            migrationBuilder.DropTable(
+                name: "ChiTietLichSuThis");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("18b0cc7f-aa5e-497c-9a7d-a158ca561315"));
+            migrationBuilder.DropTable(
+                name: "DonHangs");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("1a1040db-498c-4942-9542-29df91a1f15a"));
+            migrationBuilder.DropTable(
+                name: "GiaoDichThanhToans");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("1c44f24a-713c-4ebf-bbff-396c10f45693"));
+            migrationBuilder.DropTable(
+                name: "MoPhongs");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("1c6dbaba-a773-4df9-a5e2-dcfa93ce43db"));
+            migrationBuilder.DropTable(
+                name: "ShareReports");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("2008b29d-79af-4dad-83d8-30b5098afc26"));
+            migrationBuilder.DropTable(
+                name: "TinhNangMoKhoas");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("215ea988-8d2d-48f5-bd03-c63e965a7be3"));
+            migrationBuilder.DropTable(
+                name: "VisitLogs");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("222fc5e2-7ec5-446f-983d-43f589a82a5e"));
+            migrationBuilder.DropTable(
+                name: "AspNetRoles");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("2240d397-9322-4194-ac69-9174f4a6dfa6"));
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("2720fc79-6586-496b-b8c4-8f59e913a926"));
+            migrationBuilder.DropTable(
+                name: "BaiThis");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("2eda2d78-132f-4100-bf02-1ab43e19e64e"));
+            migrationBuilder.DropTable(
+                name: "CauHois");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("302e8466-579c-4a1f-8b76-d84b452a7b2e"));
+            migrationBuilder.DropTable(
+                name: "LichSuThis");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("33431925-d90e-443f-bb4d-0dc5a048394f"));
+            migrationBuilder.DropTable(
+                name: "ShareReplies");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("355f1057-5b9c-4ef7-9483-a696f784b122"));
+            migrationBuilder.DropTable(
+                name: "ChuDes");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("35a9212a-d786-46c8-b6e4-b1b1b7b96c57"));
+            migrationBuilder.DropTable(
+                name: "LoaiBangLais");
 
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("3693b3fb-0656-4358-aa61-6f1852544cb2"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("3a8c9643-02b5-4536-9abe-bcaecba531e1"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("3b850e12-f5a8-408c-88d2-e22e3ddf1598"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("48e73c98-017f-4788-aa43-620816a54274"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("4b2328e6-2256-4d66-bcb4-878a4ba6c433"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("5291883a-5d70-4d44-be76-8fc7e5196da1"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("5a28d77b-4387-49e6-8541-059f96459f50"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("5b5d2259-c2c1-4960-bfcd-f8ced656b95a"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("5dfc4fdf-f830-4e96-9b4c-d3601a8a4214"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("668c65d9-aa62-49bc-994a-38e95163dfff"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("6cc0e7d0-9cd0-4a2e-bac3-6a9e49996449"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("6dd81400-e240-4796-bcec-fa453132e043"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("6e08d610-d90e-4c49-81ed-dd2544e0e2d3"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("7078b656-ed8b-4e2a-bc52-df9b6bcab446"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("713d0b90-a65b-46aa-a988-14e97dc5ca08"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("7377f93b-481c-4ca4-9c55-dff8d700783f"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("73dd9082-af95-49a5-9151-ef2afc730462"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("76763bcd-5e4c-4bcf-9e89-916b48d7e991"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("78e0ce2c-e8a7-45a9-8999-2914161bc940"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("798d3390-105b-40e6-b030-23af2ccfa26a"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("79b7fb83-88ca-4e71-a0ff-741cb374ff85"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("7cb30d72-1d84-485b-b255-7bcf3b8f6cde"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("7ea708f2-b8b1-4787-a953-58d5e0cf27e0"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("7ead6682-19ab-4252-8d15-ca735035b4f1"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("7fe4fdbf-084a-4fbc-82af-a1a18b2606d5"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("8196069a-93ea-4aa5-bf8b-90799f10b999"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("84c5978f-a44b-4f49-8b30-ed8734debdd2"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("874c0ec3-a8b1-45e7-9001-a3f15bf55500"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("8887645d-e66e-4136-a243-16df6cc623be"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("8be205cc-3339-4f8c-a331-491f6bb6a4de"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("93e30bee-85c5-43ba-b539-f3088817a5a7"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("9903bb11-6828-462c-8fea-f1b0dc069cc4"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("9ac6b70c-a8d8-4f44-aab5-15f0f377bf80"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("9b9167b2-d1ce-41c9-a47e-0c6fc37f1ee9"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("9dcc5c60-d114-4389-aab5-be90f76c40fd"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("a4712242-f7a6-4c4c-a680-afa6af560e21"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("a7082f8b-b688-4513-89da-95166775c8c8"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("aa5ad586-935e-42e0-9002-331a6e6f17e4"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("aba11629-bd97-4eb8-bc28-8846ccd51a4f"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("ac022356-dfff-478a-8920-a8246b340851"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("b17ab884-4488-4658-8ee8-3c22895dc21a"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("b6400618-dbf7-4eff-9cc6-29ec22e49f30"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("b6f4b2ea-cc44-4e64-a167-34d529ee1683"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("b795ed49-e1fb-4e2f-b1ce-994b257f0733"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("ba1ea3e8-6ea1-40cf-9ca0-c79a5cc32dcf"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("c39d5ae0-6dc4-4457-89f4-6c76340d7291"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("ca876d72-60f0-4666-ad3e-0aca1ef4df59"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("cd008ad4-3948-4a23-8341-94ac6e3b549f"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("cebbff7c-ee35-4241-9f2b-b5f7bc948c83"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("d8e4bfbe-0914-49ac-aa8b-6321d20f1aca"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("dd25ba7a-3692-4aae-8e60-486edfbf96f0"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("df574d98-027c-4559-952b-b9916e7b47f5"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("df6b5953-a946-45f2-91ee-85bcfdc7b93f"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("e1abc8bf-9e95-4ee8-8116-84e41132aa6e"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("e33caaa1-67bb-48fc-8247-ac19d87a7057"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("eab73797-6fe7-4401-a2e2-c25e627534d7"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("ee39efa3-5791-40d3-a0e4-71c56ad67046"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("f7007013-7bb6-4c61-b1e0-b7bf8daa9b8e"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("f74e7ee0-4b3c-4635-a279-e2642106afc5"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("f8468803-69d9-4e31-b979-8b203bc267e1"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("fb056cb8-1fe7-4e3c-9355-375a41dbdeb1"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("fb377bf2-a274-405b-b9e0-d981823b8a3e"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("fd2bcfe7-baf1-41c2-ae87-5a353bb6de65"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("fecde70e-505e-4dd4-bd1f-6374bbcd0760"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("ff6d4a7d-b623-48c8-abe0-d0aad856cbc0"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("04135ce2-4223-423f-bf4e-17d8622cd4a5"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("07d4dab3-fdf8-407b-9dac-85010738eed5"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("120b9ee0-57f8-4ed3-a534-fc87618f3c12"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("14a46bcd-158a-449e-92e2-0a40cd026bec"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("154f3758-9a3b-486c-b11c-494ddd248aa4"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("18107078-8e3a-4db6-9c01-4b16eade4895"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("2df9031a-02d6-414f-88e0-f75518c89e52"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("4c59ce7b-7582-41fb-8481-707314803dae"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("4ff2476f-687d-441d-a12b-b523523b4a5d"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("54fce508-5f8c-41b8-abdf-199d61af8094"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("6647a7d5-bee3-4511-8d66-2a0dfd8b25c6"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("68108da6-bceb-4747-ad52-283fe3a5a3a0"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("6d5c8536-fbc1-4296-b71b-5c84e9294ab4"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("74b69f03-ac0e-48c8-bee9-946b6a4d7f00"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("8904a321-5dd6-44ee-aed7-403f23092a33"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("89116701-a827-4acd-8b2d-d02780ca362e"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("96d6bbc6-da76-4a88-9c54-c6b798fb4e58"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("98714fe1-fdb6-4486-8fb2-2ec114e50838"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("99f65f26-d3c8-47c9-9dac-85010738eed5"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("b8a61fac-5b0e-42d2-bdca-4beee01dcb72"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("bfd90d24-eb69-4796-a14c-09eec597a3de"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("db79b5c3-3570-4604-97ba-95d504b2d572"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("dc0a953c-a089-419d-ae45-02e7cbfe39b7"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("de9c9382-5245-4ecb-b515-662188b8d0a7"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("e10a6435-7b18-48d5-b7a4-c2e4cf84c8a3"));
-
-            migrationBuilder.DeleteData(
-                table: "ChiTietBaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("fdb59178-9329-48a3-badd-a3c2d8b84eab"));
-
-            migrationBuilder.DeleteData(
-                table: "LoaiBangLais",
-                keyColumn: "Id",
-                keyValue: new Guid("25edbe66-cf05-43ca-ae57-a6dfe679563a"));
-
-            migrationBuilder.DeleteData(
-                table: "LoaiBangLais",
-                keyColumn: "Id",
-                keyValue: new Guid("84031e45-3634-445a-9edc-fe146cb5fd20"));
-
-            migrationBuilder.DeleteData(
-                table: "LoaiBangLais",
-                keyColumn: "Id",
-                keyValue: new Guid("899712b1-bbe9-4fb6-8c7c-046b9de9e58b"));
-
-            migrationBuilder.DeleteData(
-                table: "LoaiBangLais",
-                keyColumn: "Id",
-                keyValue: new Guid("94d00b92-77fa-4efd-bc92-64da47a5bd1e"));
-
-            migrationBuilder.DeleteData(
-                table: "LoaiBangLais",
-                keyColumn: "Id",
-                keyValue: new Guid("bfa465f9-2b2d-4f82-9242-b30b4af0a375"));
-
-            migrationBuilder.DeleteData(
-                table: "MoPhongs",
-                keyColumn: "Id",
-                keyValue: new Guid("1c32fc5d-51a6-4349-979d-c6d7b5d369ed"));
-
-            migrationBuilder.DeleteData(
-                table: "MoPhongs",
-                keyColumn: "Id",
-                keyValue: new Guid("8e7344e6-7483-4912-bc52-26ccd1f4f3dc"));
-
-            migrationBuilder.DeleteData(
-                table: "MoPhongs",
-                keyColumn: "Id",
-                keyValue: new Guid("a465960a-1525-4140-96b3-284205133163"));
-
-            migrationBuilder.DeleteData(
-                table: "MoPhongs",
-                keyColumn: "Id",
-                keyValue: new Guid("de0f2329-c8c2-4736-9ea3-107239c304a1"));
-
-            migrationBuilder.DeleteData(
-                table: "AspNetRoles",
-                keyColumn: "Id",
-                keyValue: "05f2400b-5471-466a-8b7e-27752367e4d6");
-
-            migrationBuilder.DeleteData(
-                table: "AspNetRoles",
-                keyColumn: "Id",
-                keyValue: "10f2400b-5471-466a-8b7e-27752367e4d6");
-
-            migrationBuilder.DeleteData(
-                table: "AspNetUsers",
-                keyColumn: "Id",
-                keyValue: "8d581a98-361e-4333-a651-74e88ef572a4");
-
-            migrationBuilder.DeleteData(
-                table: "AspNetUsers",
-                keyColumn: "Id",
-                keyValue: "9ae1058d-b602-4025-ab1d-74e7bced8f3b");
-
-            migrationBuilder.DeleteData(
-                table: "BaiThis",
-                keyColumn: "Id",
-                keyValue: new Guid("beb046b2-7109-481f-9e9e-5c2804c178a0"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("057a01a9-d102-4013-8d4e-40e580010abe"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("0e418bb1-c0a8-429c-964d-08d8b97149bf"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("14be8af4-5d8f-4c40-a51e-d323d23fbcd9"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("160cfe60-432a-48d8-b501-4d288bfe2d5a"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("1760daa6-f038-4f65-8531-418edc1056f8"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("2892a1a3-c46d-4dd0-8c64-da93d5432c69"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("2e311460-e16f-44e1-981c-1c40c1268c1a"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("2e88303a-6350-4a59-bb0f-4829665fea92"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("3393dbff-9dee-4f39-9d0d-08219b69d1ed"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("33ca0bba-4d98-429a-9aee-2ddcf4cd4778"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("459f6775-e179-4288-9c2d-1d725cf3b6d8"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("537e9dd8-6ad4-4c73-93f5-c651354b7d14"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("5fab968e-1c99-47f8-954e-b7d8750594ea"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("62f88d57-380c-49c6-8dc6-418133f8c194"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("71482e7a-3b46-415c-b38b-50ac587d8b18"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("755996ec-0569-4a13-aeb4-28b38b33d0d3"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("9c7a8aa0-8976-47ce-854d-6ade9c767913"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("9ecc10c6-4184-49b1-8417-2ccac03588de"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("b0e3fc57-e1f5-4d66-a275-d80e1521cd0d"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("c386c5d2-a62c-46d0-90fc-28c7b066a298"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("ce50b6f1-6abc-481b-8a26-5fc8946efba0"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("cf39ba06-f565-4f78-8f21-354b90b54dbc"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("de1a4aa2-7f7a-4ce4-9abf-84979173ef35"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("e1a5b85f-3b8d-4213-aad5-9f3ddca19f29"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("e1d2178f-44fe-4b9a-8766-757e6f7f38ce"));
-
-            migrationBuilder.DeleteData(
-                table: "CauHois",
-                keyColumn: "Id",
-                keyValue: new Guid("fc2e0758-e3e8-4bcc-8388-74a81ff4c06f"));
-
-            migrationBuilder.DeleteData(
-                table: "LoaiBangLais",
-                keyColumn: "Id",
-                keyValue: new Guid("de0f2329-c8c2-4736-9ea3-107239c304a1"));
-
-            migrationBuilder.DeleteData(
-                table: "LoaiBangLais",
-                keyColumn: "Id",
-                keyValue: new Guid("f5f61a67-1fc5-4917-8d76-e184b6d83848"));
-
-            migrationBuilder.DeleteData(
-                table: "ChuDes",
-                keyColumn: "Id",
-                keyValue: new Guid("1365e7dd-6325-4662-ba5a-fe0312d5519a"));
-
-            migrationBuilder.DeleteData(
-                table: "ChuDes",
-                keyColumn: "Id",
-                keyValue: new Guid("51923743-b8a3-42e8-9810-219fcffaa9ee"));
-
-            migrationBuilder.DeleteData(
-                table: "ChuDes",
-                keyColumn: "Id",
-                keyValue: new Guid("52e4f349-ed48-4ab3-92aa-1aeeb73f1395"));
-
-            migrationBuilder.DeleteData(
-                table: "ChuDes",
-                keyColumn: "Id",
-                keyValue: new Guid("78627311-083d-42f9-a921-168e88e5f187"));
-
-            migrationBuilder.DeleteData(
-                table: "ChuDes",
-                keyColumn: "Id",
-                keyValue: new Guid("a1720db9-1416-4e62-a922-e34364f67418"));
-
-            migrationBuilder.DeleteData(
-                table: "ChuDes",
-                keyColumn: "Id",
-                keyValue: new Guid("a5674e1d-af51-4a56-bdd8-758210677c1a"));
-
-            migrationBuilder.DeleteData(
-                table: "ChuDes",
-                keyColumn: "Id",
-                keyValue: new Guid("cdcfb0da-a22d-4891-bac4-1fea55614508"));
-
-            migrationBuilder.DeleteData(
-                table: "ChuDes",
-                keyColumn: "Id",
-                keyValue: new Guid("d1e0a0fe-edce-445d-9e10-7428b28d1fe4"));
-
-            migrationBuilder.DeleteData(
-                table: "LoaiBangLais",
-                keyColumn: "Id",
-                keyValue: new Guid("aa89c371-0ecf-4a9a-bb8a-d1b28c329a0a"));
+            migrationBuilder.DropTable(
+                name: "Shares");
         }
     }
 }

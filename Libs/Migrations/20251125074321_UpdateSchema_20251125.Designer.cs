@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Libs.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251109051010_themthanhtoan")]
-    partial class themthanhtoan
+    [Migration("20251125074321_UpdateSchema_20251125")]
+    partial class UpdateSchema_20251125
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -2128,6 +2128,9 @@ namespace Libs.Migrations
 
                     b.Property<int>("TrangThai")
                         .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

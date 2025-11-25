@@ -1,0 +1,219 @@
+﻿@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Quản lý doanh thu";
+}
+
+<div class="container-fluid">
+
+    <div class="row mb-3">
+        <div class="col">
+            <h2 class="fw-bold">📊 Quản lý doanh thu</h2>
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Từ ngày</label>
+                    <input id="tuNgay" type="date" class="form-control" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Đến ngày</label>
+                    <input id="denNgay" type="date" class="form-control" />
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" onclick="taiThongKe()">
+                        <i class="bi bi-funnel"></i> Lọc dữ liệu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="row" id="dashboardCards"></div>
+
+    <!-- Biểu đồ doanh thu -->
+    <div class="card mt-4">
+        <div class="card-header fw-bold">Biểu đồ doanh thu theo ngày</div>
+        <div class="card-body">
+            <canvas id="chartDoanhThu" height="220"></canvas>
+        </div>
+    </div>
+
+    <!-- Bảng giao dịch -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <table id="giaoDichTable" class="table table-striped table-hover" width="100%">
+                <thead>
+                    <tr>
+                        <th>Mã GD</th>
+                        <th>Cổng</th>
+                        <th>Đơn hàng</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tạo</th>
+                        <th>Tổng tiền</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        let table;
+        let chart;
+
+        $(document).ready(function () {
+            khoiTaoBang();
+            taiThongKe();
+        });
+
+        // ===============================
+        // 1. LOAD DASHBOARD
+        // ===============================
+        async function taiThongKe() {
+
+            let tuNgay = $("#tuNgay").val();
+            let denNgay = $("#denNgay").val();
+
+            const res = await fetch(`/api/doanh-thu/thong-ke?tuNgay=${tuNgay}&denNgay=${denNgay}`);
+            const data = await res.json();
+
+            if (!data.status) return;
+
+            renderDashboard(data.data);
+            renderChart(data.data.doanhThuTheoNgay);
+            table.ajax.reload();
+        }
+
+        // ===============================
+        // 2. RENDER DASHBOARD CARDS
+        // ===============================
+        function renderDashboard(dto) {
+
+            $("#dashboardCards").html(`
+                <div class="col-md-3">
+                    <div class="card shadow-sm p-3">
+                        <h5>Tổng số đơn</h5>
+                        <h3 class="text-primary">${dto.tongSoDon}</h3>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card shadow-sm p-3">
+                        <h5>Đơn thành công</h5>
+                        <h3 class="text-success">${dto.soDonThanhCong}</h3>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card shadow-sm p-3">
+                        <h5>Đơn thất bại</h5>
+                        <h3 class="text-danger">${dto.soDonThatBai}</h3>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card shadow-sm p-3">
+                        <h5>Tổng doanh thu</h5>
+                        <h3 class="text-warning">${dto.tongDoanhThu.toLocaleString("vi-VN")} VNĐ</h3>
+                    </div>
+                </div>
+            `);
+        }
+
+        // ===============================
+        // 3. BIỂU ĐỒ DOANH THU
+        // ===============================
+        function renderChart(data) {
+            if (!data) return;
+
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+
+            if (chart) chart.destroy();
+
+            const ctx = document.getElementById("chartDoanhThu");
+
+            chart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Doanh thu",
+                        data: values,
+                        borderColor: "#3366FF",
+                        backgroundColor: "rgba(51,102,255,0.2)",
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // ===============================
+        // 4. DATA TABLE
+        // ===============================
+        function khoiTaoBang() {
+            table = $('#giaoDichTable').DataTable({
+                serverSide: true,
+                searching: true,
+                ajax: function (data, callback) {
+                    const page = (data.start / data.length) + 1;
+
+                    fetch(`/api/doanh-thu/giao-dich?page=${page}&pageSize=${data.length}`)
+                        .then(response => response.json())
+                        .then(res => {
+                            callback({
+                                data: res.items,
+                                recordsTotal: res.total,
+                                recordsFiltered: res.total
+                            });
+                        });
+                },
+                columns: [
+                    { data: "id" },
+                    { data: "congThanhToan" },
+                    { data: "donHangId" },
+                    {
+                        data: "trangThai",
+                        render: d => d === 1
+                            ? "<span class='badge bg-success'>Thành công</span>"
+                            : "<span class='badge bg-danger'>Thất bại</span>"
+                    },
+                    {
+                        data: "ngayTao",
+                        render: d => d ? new Date(d).toLocaleString("vi-VN") : ""
+                    },
+                    {
+                        data: "tongTien",
+                        render: d => (d ? Number(d).toLocaleString("vi-VN") : "0") + " VNĐ"
+                    },
+                    {
+                        data: "id",
+                         render: id => `<a href="/Admin/ChiTiet/${id}" class="btn btn-sm btn-primary">Xem</a>`
+                            }
+                ]
+            });
+        }
+
+    </script>
+}
