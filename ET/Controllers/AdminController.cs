@@ -160,5 +160,26 @@ namespace ET.Controllers
         {
             return View(id);
         }
+        //moi them 
+        public IActionResult DoanhThu()
+        {
+            return View();
+        }
+        public IActionResult Dashboard()
+        {
+            return View();
+        }
+
+        public IActionResult DanhSachGiaoDich()
+        {
+            return View();
+        }
+
+        public IActionResult ChiTiet(long id)
+        {
+            return View(id);
+        }
+
+
     }
 }

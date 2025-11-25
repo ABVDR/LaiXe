@@ -52,7 +52,8 @@ namespace Libs.Service
             {
                 TongTien = soTien,
                 TrangThai = TrangThaiThanhToan.ChoXuLy,
-                NgayTao = DateTimeOffset.UtcNow
+                NgayTao = DateTimeOffset.UtcNow,
+                UserId = userId
             };
 
             _db.Set<DonHang>().Add(don);

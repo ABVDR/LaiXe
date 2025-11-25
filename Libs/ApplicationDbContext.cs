@@ -25,22 +25,22 @@ namespace Libs
         public DbSet<VisitLog> VisitLogs { get; set; }
         public DbSet<MoPhong> MoPhongs { get; set; }
 
-        //them pthuc thanh toan
+        // Thanh toán
         public DbSet<DonHang> DonHangs { get; set; } = default!;
         public DbSet<GiaoDichThanhToan> GiaoDichThanhToans { get; set; } = default!;
         public DbSet<TinhNangMoKhoa> TinhNangMoKhoas { get; set; } = default!;
 
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-        {
-        }
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options) { }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            //them thanh toan cau hinhf moi 
+            // ⚡ Gọi base một lần duy nhất
             base.OnModelCreating(modelBuilder);
 
-            // ====== CẤU HÌNH CHO CÁC BẢNG MỚI ======
-
-            // DECIMAL precision (tránh cảnh báo và cắt số)
+            // ==========================
+            // 1) CẤU HÌNH DECIMAL
+            // ==========================
             modelBuilder.Entity<DonHang>()
                 .Property(x => x.TongTien)
                 .HasPrecision(18, 2);
@@ -49,35 +49,51 @@ namespace Libs
                 .Property(x => x.SoTienDaTra)
                 .HasPrecision(18, 2);
 
-            // Index/ràng buộc phục vụ truy vấn nhanh & idempotency
+            // ==========================
+            // 2) INDEX TỐI ƯU
+            // ==========================
             modelBuilder.Entity<TinhNangMoKhoa>()
                 .HasIndex(x => new { x.UserId, x.TenTinhNang, x.DangHoatDong })
                 .HasDatabaseName("UX_User_TinhNang_Active");
 
             modelBuilder.Entity<GiaoDichThanhToan>()
-                .HasIndex(x => x.MaDonCong); // có thể lặp do cổng gọi notify nhiều lần
+                .HasIndex(x => x.MaDonCong);
 
             modelBuilder.Entity<GiaoDichThanhToan>()
                 .HasIndex(x => x.MaGiaoDichCuoi)
-                .IsUnique(); // duy nhất để chống xử lý trùng
+                .IsUnique();
 
             modelBuilder.Entity<GiaoDichThanhToan>()
                 .HasIndex(x => new { x.TrangThai, x.NgayTao });
 
-            // (Tuỳ chọn) Default UTC ở DB cho cột thời gian nếu muốn nhất quán do DB cấp
+            // ==========================
+            // 3) DEFAULT TIME UTC
+            // ==========================
             modelBuilder.Entity<DonHang>()
                 .Property(x => x.NgayTao)
                 .HasDefaultValueSql("GETUTCDATE()");
+
             modelBuilder.Entity<GiaoDichThanhToan>()
                 .Property(x => x.NgayTao)
                 .HasDefaultValueSql("GETUTCDATE()");
+
             modelBuilder.Entity<TinhNangMoKhoa>()
                 .Property(x => x.NgayTao)
                 .HasDefaultValueSql("GETUTCDATE()");
 
-            /////
-            base.OnModelCreating(modelBuilder);
-            Console.WriteLine("🚀 Application is seeding data..............................................................");
+            // ==========================
+            // 4) QUAN HỆ DonHang → User
+            // ==========================
+            //modelBuilder.Entity<DonHang>()
+            //    .HasOne(d => d.User)
+            //    .WithMany()
+            //    .HasForeignKey(d => d.UserId)
+            //    .OnDelete(DeleteBehavior.Restrict);
+
+            // ==========================
+            // 5) SEED DATA
+            // ==========================
+            Console.WriteLine("🚀 Application is seeding data...");
             modelBuilder.SeedingData();
         }
     }

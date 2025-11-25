@@ -8,6 +8,10 @@ using System.Threading.Tasks;
 
 namespace Libs.Repositories
 {
+    public interface IDonHangRepository
+    {
+        Task<DonHang?> GetAsync(long id, CancellationToken ct);
+    }
     public class DonHangRepository : IDonHangRepository
     {
         private readonly ApplicationDbContext _db;

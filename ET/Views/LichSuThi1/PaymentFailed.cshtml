@@ -3,13 +3,42 @@
     var error = ViewData["Error"]?.ToString() ?? "Không rõ nguyên nhân";
 }
 
-<div class="container text-center" style="margin-top: 80px;">
-    <h2 class="text-danger">❌ Thanh toán thất bại</h2>
-    <p>Giao dịch không thành công.</p>
-    <p class="text-muted">Lý do: <strong>@error</strong></p>
+<div class="container" style="max-width: 600px; margin-top: 100px; text-align:center;">
+    <h2 style="font-weight:600; font-size:28px; color:#d93025; letter-spacing:-0.5px;">
+        Thanh toán không thành công
+    </h2>
 
-    <div class="mt-4">
-        <a href="/LichSuThi1/LuyenLaiCauSai" class="btn btn-outline-primary">Quay lại luyện lại câu sai</a>
-        <a href="/LichSuThi1" class="btn btn-outline-secondary ms-2">Trang lịch sử thi</a>
+    <p style="margin-top: 12px; font-size:16px; color:#555;">
+        Giao dịch của bạn chưa được xử lý.
+    </p>
+
+    <p style="margin-top: 4px; font-size:15px; color:#777;">
+        Lý do: <strong style="color:#333;">@error</strong>
+    </p>
+
+    <div style="margin-top: 40px; display:flex; justify-content:center; gap:14px;">
+        <a href="/LichSuThi1/LuyenLaiCauSai"
+           style="
+                padding:10px 20px;
+                border-radius:10px;
+                border:1px solid #d0d0d0;
+                text-decoration:none;
+                color:#0071e3;
+                font-size:15px;
+                transition:0.2s;">
+            Quay lại luyện tập
+        </a>
+
+        <a href="/LichSuThi1"
+           style="
+                padding:10px 20px;
+                border-radius:10px;
+                background:#f5f5f7;
+                text-decoration:none;
+                color:#333;
+                font-size:15px;
+                transition:0.2s;">
+            Trang lịch sử thi
+        </a>
     </div>
 </div>

@@ -359,22 +359,22 @@ namespace ET.Controllers.api
         {
             try
             {
-                ICongThanhToan cong = gateway.ToLower() switch
-                {
-                    "momo" => HttpContext.RequestServices.GetRequiredService<CongMoMo>(),
-                    "paypal" => HttpContext.RequestServices.GetRequiredService<CongPayPal>(),
-                    _ => throw new NotSupportedException($"Gateway {gateway} not supported")
-                };
+                if (!string.Equals(gateway, "momo", StringComparison.OrdinalIgnoreCase))
+                    return BadRequest(new { status = false, message = "Gateway không hỗ trợ webhook hoặc không dùng webhook" });
 
+                var cong = HttpContext.RequestServices.GetRequiredService<CongMoMo>();
                 var ok = await cong.XuLyWebhookAsync(Request, ct);
-                return ok ? Ok(new { status = true }) : BadRequest(new { status = false, message = "Invalid webhook" });
+
+                return ok ? Ok(new { status = true })
+                          : BadRequest(new { status = false, message = "Invalid webhook" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi xử lý webhook");
+                _logger.LogError(ex, "Lỗi khi xử lý webhook MoMo");
                 return StatusCode(500, new { status = false, message = ex.Message });
             }
         }
+
         public class CreatePaymentSessionDto
         {
             public PaymentMethod Method { get; set; } // 1 = MoMo, 2 = PayPal

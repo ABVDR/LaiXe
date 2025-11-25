@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Libs.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251101051511_update")]
-    partial class update
+    [Migration("20251125073637_themdonhang")]
+    partial class themdonhang
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -2109,32 +2109,84 @@ namespace Libs.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Libs.Entity.GiaoDich", b =>
+            modelBuilder.Entity("Libs.Entity.DonHang", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("bigint");
 
-                    b.Property<bool>("DaThanhToan")
-                        .HasColumnType("bit");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("MaGiaoDich")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTimeOffset>("NgayTao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
-                    b.Property<DateTime>("NgayThanhToan")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("SoTien")
+                    b.Property<decimal>("TongTien")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int>("TrangThai")
+                        .HasColumnType("int");
+
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("GiaoDichs");
+                    b.ToTable("DonHangs");
+                });
+
+            modelBuilder.Entity("Libs.Entity.GiaoDichThanhToan", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("CongThanhToan")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<long>("DonHangId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MaDonCong")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("MaGiaoDichCuoi")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTimeOffset?>("NgayCapNhat")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("NgayTao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("ThongBaoLoi")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<int>("TrangThai")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MaDonCong");
+
+                    b.HasIndex("MaGiaoDichCuoi")
+                        .IsUnique()
+                        .HasFilter("[MaGiaoDichCuoi] IS NOT NULL");
+
+                    b.HasIndex("TrangThai", "NgayTao");
+
+                    b.ToTable("GiaoDichThanhToans");
                 });
 
             modelBuilder.Entity("Libs.Entity.LichSuThi", b =>
@@ -2353,6 +2405,52 @@ namespace Libs.Migrations
                             NoiDung = "Người đi bộ vượt đèn đỏ sang đường",
                             VideoUrl = "/videos/876b7aef-94dc-46e1-8d67-2b5f016e50ed.mp4"
                         });
+                });
+
+            modelBuilder.Entity("Libs.Entity.TinhNangMoKhoa", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("DangHoatDong")
+                        .HasColumnType("bit");
+
+                    b.Property<long?>("DonHangId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("HetHanLuc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("KichHoatLuc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("NgayTao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<decimal>("SoTienDaTra")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TenTinhNang")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "TenTinhNang", "DangHoatDong")
+                        .HasDatabaseName("UX_User_TinhNang_Active");
+
+                    b.ToTable("TinhNangMoKhoas");
                 });
 
             modelBuilder.Entity("Libs.Entity.User", b =>

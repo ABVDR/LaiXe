@@ -33,6 +33,12 @@ namespace Libs.ThanhToan
 
         public async Task<TaoPhienThanhToanResult> TaoThanhToanAsync(TaoPhienThanhToanRequest req, CancellationToken ct)
         {
+            // Chỉ dùng cho redirect-based gateways (hiện tại: MoMo)
+            if (req.PhuongThuc != PaymentMethod.MoMo)
+            {
+                return new(false, null, null, "Phương thức này không dùng redirect-flow.");
+            }
+
             var donHang = await _orders.GetAsync(req.DonHangId, ct)
                           ?? throw new InvalidOperationException("Không tìm thấy đơn hàng");
 
